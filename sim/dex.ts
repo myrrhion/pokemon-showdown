@@ -139,7 +139,7 @@ export class ModdedDex {
 		this.dataDir = "";
 		try {
 			this.dataDir = (this.isBase ? DATA_DIR : MODS_DIR + '/' + this.currentMod);
-			if (!this.loadDataFile(this.dataDir + '/', 'Scripts')) {
+			if (!this.loadDataFile(this.dataDir + '/', 'Scripts').gen) {
 				this.dataDir = (this.isBase ? DATA_DIR_BU : MODS_DIR_BU + '/' + this.currentMod);
 			}
 		} catch (e) {
