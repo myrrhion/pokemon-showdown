@@ -550,7 +550,7 @@ export const Formats: FormatList = [
 		name: "[Gen 8] Meanwhile between the lines",
 		desc: `Special only for me thing do not steal!`,
 
-		mod: 'gen9mbtl',
+		mod: 'gen8',
 		// searchShow: false,
 		ruleset: ['-Nonexistent', 'Team Preview', 'HP Percentage Mod', 'Cancel Mod', 'Endless Battle Clause'],
 	},
