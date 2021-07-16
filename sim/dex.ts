@@ -483,6 +483,7 @@ export class ModdedDex {
 		const dataCache: {[k in keyof DexTableData]?: any} = {};
 
 		const basePath = this.dataDir + '/';
+		console.log(basePath);
 
 		const Scripts = this.loadDataFile(basePath, 'Scripts');
 		this.parentMod = this.isBase ? '' : (Scripts.inherit || 'base');
