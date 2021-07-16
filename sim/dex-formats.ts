@@ -4,7 +4,8 @@ import {EventMethods} from './dex-conditions';
 import {Tags} from '../data/tags';
 
 const DEFAULT_MOD = 'gen8';
-const MAIN_FORMATS = `${__dirname}/../.config-dist/formats`;
+const MAIN_FORMATS = `${__dirname}/../config/formats`;
+const MAIN_FORMATS_BU = `${__dirname}/../.config-dist/formats`;
 const CUSTOM_FORMATS = `${__dirname}/../config/custom-formats`;
 
 export interface FormatData extends Partial<Format>, EventMethods {
@@ -515,7 +516,12 @@ export class DexFormats {
 				throw e;
 			}
 		}
-		let Formats: AnyObject[] = require(MAIN_FORMATS).Formats;
+		let Formats: AnyObject[];
+		try {
+			Formats = require(MAIN_FORMATS).Formats;
+		} catch (e) {
+			Formats = require(MAIN_FORMATS_BU).Formats;
+		}
 		if (!Array.isArray(Formats)) {
 			throw new TypeError(`Exported property 'Formats' from "./config/formats.ts" must be an array`);
 		}

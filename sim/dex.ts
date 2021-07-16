@@ -39,8 +39,10 @@ import {Format, DexFormats} from './dex-formats';
 import {Utils} from '../lib';
 
 const BASE_MOD = 'gen8' as ID;
-const DATA_DIR = path.resolve(__dirname, '../.data-dist');
-const MODS_DIR = path.resolve(__dirname, '../.data-dist/mods');
+const DATA_DIR = path.resolve(__dirname, '../data');
+const MODS_DIR = path.resolve(__dirname, '../data/mods');
+const DATA_DIR_BU = path.resolve(__dirname, '../.data-dist');
+const MODS_DIR_BU = path.resolve(__dirname, '../.data-dist/mods');
 
 const dexes: {[mod: string]: ModdedDex} = Object.create(null);
 
@@ -134,7 +136,15 @@ export class ModdedDex {
 	constructor(mod = 'base') {
 		this.isBase = (mod === 'base');
 		this.currentMod = mod;
-		this.dataDir = (this.isBase ? DATA_DIR : MODS_DIR + '/' + this.currentMod);
+		this.dataDir = "";
+		try {
+			this.dataDir = (this.isBase ? DATA_DIR : MODS_DIR + '/' + this.currentMod);
+			if (!fs.existsSync(this.dataDir)) {
+				this.dataDir = (this.isBase ? DATA_DIR_BU : MODS_DIR_BU + '/' + this.currentMod);
+			}
+		} catch (e) {
+			this.dataDir = (this.isBase ? DATA_DIR : MODS_DIR + '/' + this.currentMod);
+		}
 
 		this.dataCache = null;
 		this.textCache = null;
@@ -438,7 +448,11 @@ export class ModdedDex {
 	loadTextFile(
 		name: string, exportName: string
 	): DexTable<MoveText | ItemText | AbilityText | PokedexText | DefaultText> {
-		return require(`${DATA_DIR}/text/${name}`)[exportName];
+		try {
+			return require(`${DATA_DIR}/text/${name}`)[exportName];
+		} catch (e) {
+			return require(`${DATA_DIR_BU}/text/${name}`)[exportName];
+		}
 	}
 
 	includeMods(): this {
