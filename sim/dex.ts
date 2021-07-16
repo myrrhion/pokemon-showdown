@@ -483,8 +483,6 @@ export class ModdedDex {
 		const dataCache: {[k in keyof DexTableData]?: any} = {};
 
 		const basePath = this.dataDir + '/';
-		console.log(basePath);
-
 		const Scripts = this.loadDataFile(basePath, 'Scripts');
 		this.parentMod = this.isBase ? '' : (Scripts.inherit || 'base');
 
@@ -546,7 +544,6 @@ export class ModdedDex {
 
 		// Flag the generation. Required for team validator.
 		this.gen = dataCache.Scripts.gen;
-		console.log(`${dataCache.Scripts}` + '\n');
 		if (this.currentMod === 'base') this.gen = 8;
 		if (!this.gen) throw new Error(`Mod ${this.currentMod} needs a generation number in scripts.js`);
 		this.dataCache = dataCache as DexTableData;

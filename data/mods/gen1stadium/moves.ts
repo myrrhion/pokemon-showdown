@@ -1,4 +1,3 @@
-console.log("Gen1Stadium");
 export const Moves: {[k: string]: ModdedMoveData} = {
 	bind: {
 		inherit: true,
