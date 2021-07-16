@@ -19681,4 +19681,17 @@ export const Moves: {[moveid: string]: MoveData} = {
 		type: "Electric",
 		contestType: "Cool",
 	},
+	gnaw: {
+		accuracy: 100,
+		basePower: 20,
+		category: "Physical",
+		name: "Gnaw",
+		pp: 25,
+		priority: 0,
+		flags: {bite: 1, contact: 1, protect: 1, mirror: 1, heal: 1},
+		drain: [1, 2],
+		secondary: null,
+		target: "normal",
+		type: "Ghost",
+	},
 };
