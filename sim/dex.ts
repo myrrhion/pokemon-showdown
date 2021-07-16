@@ -498,7 +498,7 @@ export class ModdedDex {
 
 		const basePath = this.dataDir + '/';
 		const Scripts = this.loadDataFile(basePath, 'Scripts');
-		if (!Scripts) {
+		if (!Scripts.gen) {
 			console.log("NOTHING");
 		}
 		this.parentMod = this.isBase ? '' : (Scripts.inherit || 'base');
