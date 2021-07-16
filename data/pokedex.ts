@@ -2337,7 +2337,7 @@ export const Pokedex: {[speciesid: string]: SpeciesData} = {
 	hitmonlee: {
 		num: 106,
 		name: "Hitmonlee",
-		types: ["Ghost"],
+		types: ["Electric"],
 		gender: "M",
 		baseStats: {hp: 50, atk: 120, def: 53, spa: 35, spd: 110, spe: 87},
 		abilities: {0: "Limber", 1: "Reckless", H: "Unburden"},
