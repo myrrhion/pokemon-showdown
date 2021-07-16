@@ -546,6 +546,7 @@ export class ModdedDex {
 
 		// Flag the generation. Required for team validator.
 		this.gen = dataCache.Scripts.gen;
+		console.log(`${this.gen}` + '\n');
 		if (!this.gen) throw new Error(`Mod ${this.currentMod} needs a generation number in scripts.js`);
 		this.dataCache = dataCache as DexTableData;
 
