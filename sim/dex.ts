@@ -139,7 +139,7 @@ export class ModdedDex {
 		this.dataDir = "";
 		try {
 			this.dataDir = (this.isBase ? DATA_DIR : MODS_DIR + '/' + this.currentMod);
-			if (!fs.existsSync(this.dataDir)) {
+			if (!this.loadDataFile(this.dataDir + '/', 'Scripts')) {
 				this.dataDir = (this.isBase ? DATA_DIR_BU : MODS_DIR_BU + '/' + this.currentMod);
 			}
 		} catch (e) {
@@ -498,9 +498,6 @@ export class ModdedDex {
 
 		const basePath = this.dataDir + '/';
 		const Scripts = this.loadDataFile(basePath, 'Scripts');
-		if (!Scripts.gen) {
-			console.log("NOTHING");
-		}
 		this.parentMod = this.isBase ? '' : (Scripts.inherit || 'base');
 
 		let parentDex;
