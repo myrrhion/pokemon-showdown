@@ -39,8 +39,8 @@ import {Format, DexFormats} from './dex-formats';
 import {Utils} from '../lib';
 
 const BASE_MOD = 'gen8' as ID;
-const DATA_DIR = path.resolve(__dirname, '../data');
-const MODS_DIR = path.resolve(__dirname, '../data/mods');
+const DATA_DIR = path.resolve(__dirname, '../.data-dist');
+const MODS_DIR = path.resolve(__dirname, '../.data-dist/mods');
 
 const dexes: {[mod: string]: ModdedDex} = Object.create(null);
 
@@ -547,7 +547,7 @@ export class ModdedDex {
 		// Flag the generation. Required for team validator.
 		this.gen = dataCache.Scripts.gen;
 		console.log(`${dataCache.Scripts}` + '\n');
-		this.gen = 8;
+		if (this.currentMod == 'base') this.gen = 8;
 		if (!this.gen) throw new Error(`Mod ${this.currentMod} needs a generation number in scripts.js`);
 		this.dataCache = dataCache as DexTableData;
 
