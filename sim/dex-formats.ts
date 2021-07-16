@@ -525,6 +525,7 @@ export class DexFormats {
 		let column = 1;
 		for (const [i, format] of Formats.entries()) {
 			const id = toID(format.name);
+			console.log(format.mod);
 			if (format.section) section = format.section;
 			if (format.column) column = format.column;
 			if (!format.name && format.section) continue;

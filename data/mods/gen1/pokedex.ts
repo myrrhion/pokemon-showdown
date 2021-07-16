@@ -325,7 +325,7 @@ export const Pokedex: {[k: string]: ModdedSpeciesData} = {
 	},
 	magnemite: {
 		inherit: true,
-		types: ["Electric"],
+		types: ["Fighting"],
 		baseStats: {hp: 25, atk: 35, def: 70, spa: 95, spd: 95, spe: 45},
 	},
 	magneton: {

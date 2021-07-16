@@ -547,6 +547,14 @@ export const Formats: FormatList = [
 		section: "Pet Mods",
 	},
 	{
+		name: "[Gen 8] Meanwhile between the lines",
+		desc: `Special only for me thing do not steal!`,
+
+		mod: 'gen9mbtl',
+		// searchShow: false,
+		ruleset: ['-Nonexistent', 'Team Preview', 'HP Percentage Mod', 'Cancel Mod', 'Endless Battle Clause'],
+	},
+	{
 		name: "[Gen 8] Fusion Evolution UU",
 		threads: [
 			`&bullet; <a href="https://www.smogon.com/forums/threads/3674163/">Fusion Evolution UU</a>`,

@@ -1,3 +1,4 @@
+console.log("Gen1Stadium");
 export const Moves: {[k: string]: ModdedMoveData} = {
 	bind: {
 		inherit: true,
@@ -6,6 +7,19 @@ export const Moves: {[k: string]: ModdedMoveData} = {
 	clamp: {
 		inherit: true,
 		// FIXME: onBeforeMove() {},
+	},
+	gnaw: {
+		accuracy: 100,
+		basePower: 20,
+		category: "Physical",
+		name: "Gnaw",
+		pp: 25,
+		priority: 0,
+		flags: {bite: 1, contact: 1, protect: 1, mirror: 1, heal: 1},
+		drain: [1, 2],
+		secondary: null,
+		target: "normal",
+		type: "Ghost",
 	},
 	counter: {
 		inherit: true,
@@ -63,8 +77,8 @@ export const Moves: {[k: string]: ModdedMoveData} = {
 	},
 	highjumpkick: {
 		inherit: true,
-		desc: "If this attack misses the target, the user takes 1 HP of damage.",
-		shortDesc: "User takes 1 HP damage it would have dealt if miss.",
+		desc: "Test If this attack misses the target, the user takes 1 HP of damage.",
+		shortDesc: "Test User takes 1 HP damage it would have dealt if miss.",
 		onMoveFail(target, source, move) {
 			if (!target.types.includes('Ghost')) {
 				this.directDamage(1, source);
