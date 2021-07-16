@@ -4,7 +4,7 @@ import {EventMethods} from './dex-conditions';
 import {Tags} from '../data/tags';
 
 const DEFAULT_MOD = 'gen8';
-const MAIN_FORMATS = `${__dirname}\\..\\config\\formats`;
+const MAIN_FORMATS = `${__dirname.slice(0,-10)}\\config\\formats`;
 const CUSTOM_FORMATS = `${__dirname}/../config/custom-formats`;
 
 export interface FormatData extends Partial<Format>, EventMethods {
