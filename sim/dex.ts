@@ -508,6 +508,11 @@ export class ModdedDex {
 					`Unable to load ${this.currentMod}. 'inherit' in scripts.ts should specify a parent mod from which to inherit data, or must be not specified.`
 				);
 			}
+		} else {
+			for (const dataType of DATA_TYPES.concat('Aliases')) {
+				const BattleData = this.loadDataFile(basePath + 'custom/', dataType);
+				if (BattleData !== dataCache[dataType]) dataCache[dataType] = Object.assign(BattleData, dataCache[dataType]);
+			}
 		}
 
 		if (!parentDex) {

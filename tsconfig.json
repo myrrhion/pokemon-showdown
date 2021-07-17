@@ -21,6 +21,7 @@
         "./data/*",
         "./data/text/*",
         "./data/mods/*/*",
+        "./data/custom/*",
         "./dev-tools/*.ts",
         "./lib/*.ts",
         "./server/**/*.ts",
