@@ -463,7 +463,6 @@ export const Aliases: {[alias: string]: string} = {
 	pokestargiant2: "Pokestar Giant",
 	pokestarmonica2: "Pokestar Giant",
 	pokestarufopropu1: "Pokestar UFO",
-	pokestarufopropu2: "Pokestar UFO",
 	pokestarpropu1: "Pokestar UFO",
 	pokestarpropu2: "Pokestar UFO-2",
 	pokestarbrycenmanprop: "Pokestar Brycen-Man",
