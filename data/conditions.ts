@@ -774,4 +774,11 @@ export const Conditions: {[k: string]: ConditionData} = {
 			return [type];
 		},
 	},
+	givewistfulthinking: {
+		duration: 1,
+		onSwitchInPriority: 1,
+		onSwitchIn(pokemon) {
+			pokemon.addVolatile('wistfulthinking');
+		},
+	},
 };
