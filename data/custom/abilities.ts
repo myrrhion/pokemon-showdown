@@ -1,7 +1,8 @@
 export const Abilities: {[k: string]: ModdedAbilityData} = {
-	infectious: {
+	infectiousbite: {
 		name: "Infectious Bite",
 		desc: "This is a long description",
+		shortDesc: "Infects Pokemon that attack it.",
 		onDamagingHit(damage, target, source, move) {
 			const sourceAbility = source.getAbility();
 			if (sourceAbility.isPermanent || sourceAbility.id === 'infectious' || sourceAbility.id === 'infected') {
@@ -18,6 +19,7 @@ export const Abilities: {[k: string]: ModdedAbilityData} = {
 	infected: {
 		name: "Infected",
 		desc: "",
+		shortDesc: "Infects Pokemon that attack it, also, is effected.",
 		onDamagingHit(damage, target, source, move) {
 			const sourceAbility = source.getAbility();
 			if (sourceAbility.isPermanent || sourceAbility.id === 'infectious') {
