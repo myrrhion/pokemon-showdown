@@ -1736,4 +1736,18 @@ export const AbilitiesText: {[k: string]: AbilityText} = {
 
 		activate: "  [POKEMON] extends [MOVE] by 2 turns!",
 	},
+
+	// Custom
+	infectiousbite: {
+		name: "Infectious Bite",
+		desc: "Infects",
+
+		changeAbility: "  [TARGET]'s Ability became Infected!",
+	},
+	infected: {
+		name: "Infectious Bite",
+		desc: "Infects",
+
+		changeAbility: "  [TARGET]'s Ability became Infected!",
+	},
 };

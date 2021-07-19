@@ -5,11 +5,11 @@ export const Abilities: {[k: string]: ModdedAbilityData} = {
 		shortDesc: "Infects Pokemon that attack it.",
 		onDamagingHit(damage, target, source, move) {
 			const sourceAbility = source.getAbility();
-			if (sourceAbility.isPermanent || sourceAbility.id === 'infectious' || sourceAbility.id === 'infected') {
+			if (sourceAbility.isPermanent || sourceAbility.id === 'infectiousbite' || sourceAbility.id === 'infected') {
 				return;
 			}
 			if (this.checkMoveMakesContact(move, source, target, !source.isAlly(target))) {
-				const oldAbility = source.setAbility('mummy', target);
+				const oldAbility = source.setAbility('infected', target);
 				if (oldAbility) {
 					this.add('-activate', target, 'ability: Infectious Bite', this.dex.abilities.get(oldAbility).name, '[of] ' + source);
 				}
