@@ -137,14 +137,7 @@ export class ModdedDex {
 		this.isBase = (mod === 'base');
 		this.currentMod = mod;
 		this.dataDir = "";
-		try {
-			this.dataDir = (this.isBase ? DATA_DIR : MODS_DIR + '/' + this.currentMod);
-			if (!this.loadDataFile(this.dataDir + '/', 'Scripts').gen) {
-				this.dataDir = (this.isBase ? DATA_DIR_BU : MODS_DIR_BU + '/' + this.currentMod);
-			}
-		} catch (e) {
-			this.dataDir = (this.isBase ? DATA_DIR : MODS_DIR + '/' + this.currentMod);
-		}
+		this.dataDir = (this.isBase ? DATA_DIR : MODS_DIR + '/' + this.currentMod);
 
 		this.dataCache = null;
 		this.textCache = null;
@@ -448,11 +441,7 @@ export class ModdedDex {
 	loadTextFile(
 		name: string, exportName: string
 	): DexTable<MoveText | ItemText | AbilityText | PokedexText | DefaultText> {
-		try {
-			return require(`${DATA_DIR}/text/${name}`)[exportName];
-		} catch (e) {
-			return require(`${DATA_DIR_BU}/text/${name}`)[exportName];
-		}
+		return require(`${DATA_DIR}/text/${name}`)[exportName];
 	}
 
 	includeMods(): this {
