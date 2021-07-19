@@ -507,7 +507,7 @@ export class DexFormats {
 		// Load formats
 		let customFormats;
 		try {
-			customFormats = require(CUSTOM_FORMATS).Formats;
+			customFormats = require(`${__dirname}/../config/custom-formats`).Formats;
 			if (!Array.isArray(customFormats)) {
 				throw new TypeError(`Exported property 'Formats' from "./config/custom-formats.ts" must be an array`);
 			}
