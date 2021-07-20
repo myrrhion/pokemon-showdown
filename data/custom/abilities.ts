@@ -22,13 +22,13 @@ export const Abilities: {[k: string]: ModdedAbilityData} = {
 		shortDesc: "Infects Pokemon that attack it, also, is effected.",
 		onDamagingHit(damage, target, source, move) {
 			const sourceAbility = source.getAbility();
-			if (sourceAbility.isPermanent || sourceAbility.id === 'infectious') {
+			if (sourceAbility.isPermanent || sourceAbility.id === 'infectiousbite') {
 				return;
 			}
 			if (this.checkMoveMakesContact(move, source, target, !source.isAlly(target))) {
 				const oldAbility = source.setAbility('mummy', target);
 				if (oldAbility) {
-					this.add('-activate', target, 'ability: Infectious Bite', this.dex.abilities.get(oldAbility).name, '[of] ' + source);
+					this.add('-activate', target, 'ability: Infected', this.dex.abilities.get(oldAbility).name, '[of] ' + source);
 				}
 			}
 		},

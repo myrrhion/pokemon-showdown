@@ -1742,12 +1742,12 @@ export const AbilitiesText: {[k: string]: AbilityText} = {
 		name: "Infectious Bite",
 		desc: "Infects",
 
-		changeAbility: "  [TARGET]'s Ability became Infected!",
+		changeAbility: "  [TARGET]'s Ability became Infectious Bite!",
 	},
 	infected: {
 		name: "Infectious Bite",
 		desc: "Infects",
-
+		shortDesc: "Is infected yo",
 		changeAbility: "  [TARGET]'s Ability became Infected!",
 	},
 };
