@@ -53,6 +53,10 @@ export class BasicEffect implements EffectData {
 	 * condition would be "confusion", etc.
 	 */
 	fullname: string;
+	/**
+	 * This is for custom contents
+	 */
+	isCustom: boolean;
 	/** Effect type. */
 	effectType: EffectType;
 	/**
@@ -110,6 +114,7 @@ export class BasicEffect implements EffectData {
 		this.fullname = Utils.getString(data.fullname) || this.name;
 		this.effectType = Utils.getString(data.effectType) as EffectType || 'Condition';
 		this.exists = !!(this.exists && this.id);
+		this.isCustom = !!(data.isCustom);
 		this.num = data.num || 0;
 		this.gen = data.gen || 0;
 		this.shortDesc = data.shortDesc || '';

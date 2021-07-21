@@ -17072,6 +17072,7 @@ export const Pokedex: {[speciesid: string]: SpeciesData} = {
 		num: 66,
 		name: "Machop-Albea",
 		baseSpecies: "Machop",
+		isCustom: true,
 		forme: "Albea",
 		types: ["Fighting", "Rock"],
 		genderRatio: {M: 0.75, F: 0.25},

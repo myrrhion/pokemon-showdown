@@ -125,6 +125,7 @@ interface EffectData {
 	infiltrates?: boolean;
 	isNonstandard?: Nonstandard | null;
 	shortDesc?: string;
+	isCustom?: boolean;
 }
 
 type ModdedEffectData = EffectData | Partial<EffectData> & {inherit: true};
