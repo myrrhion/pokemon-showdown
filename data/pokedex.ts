@@ -17068,4 +17068,20 @@ export const Pokedex: {[speciesid: string]: SpeciesData} = {
 		eggGroups: ["Undiscovered"],
 		gen: 5,
 	},
+	machopalbea: {
+		num: 66,
+		name: "Machop-Albea",
+		baseSpecies: "Machop",
+		forme: "Albea",
+		types: ["Fighting", "Rock"],
+		genderRatio: {M: 0.75, F: 0.25},
+		baseStats: {hp: 75, atk: 60, def: 65, spa: 35, spd: 35, spe: 35},
+		abilities: {0: "Thick Fat", 1: "Sturdy", H: "Inner Focus"},
+		heightm: 0.8,
+		weightkg: 29.5,
+		color: "Gray",
+		evos: ["Machoke"],
+		eggGroups: ["Human-Like"],
+	},
+
 };
