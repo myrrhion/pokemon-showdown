@@ -1,6 +1,7 @@
 export const Learnsets: {[speciesid: string]: LearnsetData} = {
 	machopalbea: {
 		learnset: {
+			ancientpower: ["8L12", "8T"],
 			attract: ["8M", "7M", "7V", "6M", "5M", "4M", "3M"],
 			bide: ["8V", "7V"],
 			bodyslam: ["8M", "7V", "3T"],
@@ -8,7 +9,6 @@ export const Learnsets: {[speciesid: string]: LearnsetData} = {
 			bulkup: ["8M", "8L36", "8V", "7M", "7L37", "6M", "6L37", "5M", "4M", "3M"],
 			bulldoze: ["8M", "7M", "6M", "5M"],
 			bulletpunch: ["8E", "7E", "6E", "5E", "5D", "4E"],
-			captivate: ["4M"],
 			closecombat: ["8M", "7E", "6E", "5E", "4E"],
 			coaching: ["8T"],
 			confide: ["7M", "6M"],
@@ -46,7 +46,6 @@ export const Learnsets: {[speciesid: string]: LearnsetData} = {
 			leer: ["8L1", "8V", "7L1", "7V", "6L1", "5L1", "4L1", "3L1"],
 			lightscreen: ["8M", "8V", "7M", "7V", "6M", "5M", "4E", "3E"],
 			lowkick: ["8M", "8L1", "8V", "7T", "7L1", "7V", "6T", "6L1", "5T", "5L1", "5D", "4T", "4L1", "3L1"],
-			lowsweep: ["8M", "8L12", "7M", "7L13", "6M", "6L13", "5M", "5L13"],
 			meditate: ["7E", "7V", "6E", "5E", "4E", "3E"],
 			megakick: ["8M", "7V", "3T"],
 			megapunch: ["8M", "7V", "3T"],
