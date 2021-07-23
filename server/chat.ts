@@ -1104,16 +1104,7 @@ export class CommandContext extends MessageContext {
 					const groupName = Config.groups[Config.pmmodchat] && Config.groups[Config.pmmodchat].name || Config.pmmodchat;
 					throw new Chat.ErrorMessage(this.tr`On this server, you must be of rank ${groupName} or higher to PM users.`);
 				}
-				const targetFriends = targetUser.friends || new Set();
-				const targetBlock = targetUser.settings.blockPMs;
-				// we check if they can lock the other before this so we're fine here
-				const authAtLeast = targetBlock === true ?
-					user.can('lock') :
-					Users.globalAuth.atLeast(user, targetBlock as any);
-
-				if (targetBlock && !user.can('lock', targetUser) && !(
-					targetBlock === 'friends' ? targetFriends?.has(user.id) : authAtLeast
-				)) {
+				if (!this.checkCanPM(targetUser)) {
 					Chat.maybeNotifyBlocked('pm', targetUser, user);
 					if (!targetUser.can('lock')) {
 						throw new Chat.ErrorMessage(this.tr`This user is blocking private messages right now.`);
@@ -1122,10 +1113,7 @@ export class CommandContext extends MessageContext {
 						throw new Chat.ErrorMessage(this.tr`This ${Config.groups[targetUser.tempGroup].name} is too busy to answer private messages right now. Please contact a different staff member.`);
 					}
 				}
-				const userFriends = user.friends || new Set();
-				if (user.settings.blockPMs && (user.settings.blockPMs === true ||
-					(user.settings.blockPMs === 'friends' && !userFriends?.has(targetUser.id)) ||
-					!Users.globalAuth.atLeast(targetUser, user.settings.blockPMs as AuthLevel)) && !targetUser.can('lock')) {
+				if (!this.checkCanPM(user, targetUser)) {
 					throw new Chat.ErrorMessage(this.tr`You are blocking private messages right now.`);
 				}
 			}
@@ -1209,6 +1197,15 @@ export class CommandContext extends MessageContext {
 		}
 
 		return message;
+	}
+	checkCanPM(targetUser: User, user?: User) {
+		if (!user) user = this.user;
+		const setting = targetUser.settings.blockPMs;
+		if (user.can('lock') || !setting) return true;
+		if (setting === true && !user.can('lock')) return false; // this is to appease TS
+		const friends = targetUser.friends || new Set();
+		if (setting === 'friends') return friends.has(user.id);
+		return Users.globalAuth.atLeast(user, setting as AuthLevel);
 	}
 	checkPMHTML(targetUser: User) {
 		if (!(this.room && (targetUser.id in this.room.users)) && !this.user.can('addhtml')) {
@@ -1984,6 +1981,8 @@ export const Chat = new class {
 			message = `/eval ${message.slice(3)}`;
 		} else if (message.startsWith(`>>> `)) {
 			message = `/evalbattle ${message.slice(4)}`;
+		} else if (message.startsWith('>>sql ')) {
+			message = `/evalsql ${message.slice(6)}`;
 		} else if (message.startsWith(`/me`) && /[^A-Za-z0-9 ]/.test(message.charAt(3))) {
 			message = `/mee ${message.slice(3)}`;
 		} else if (message.startsWith(`/ME`) && /[^A-Za-z0-9 ]/.test(message.charAt(3))) {

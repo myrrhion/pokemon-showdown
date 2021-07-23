@@ -28,6 +28,17 @@ export interface DatabaseResult {
 	result?: any;
 }
 
+export interface Friend {
+	/** Always the same as Friend#friend. Use whichever you want. */
+	userid: ID;
+	/** Always the same as Friend#userid. Use whichever you want. */
+	friend: ID;
+	send_login_data: number;
+	last_login: number;
+	public_list: number;
+	allowing_login: number;
+}
+
 /** Like Chat.ErrorMessage, but made for the subprocess so we can throw errors to the user not using errorMessage
  * because errorMessage crashes when imported (plus we have to spawn dex, etc, all unnecessary - this is easier)
  */
@@ -119,7 +130,7 @@ export class FriendsDatabase {
 		statements.expire.run();
 		return database;
 	}
-	getFriends(userid: ID): Promise<AnyObject[]> {
+	getFriends(userid: ID): Promise<Friend[]> {
 		return this.all('get', [userid, MAX_FRIENDS]);
 	}
 	async getRequests(user: User) {
@@ -169,7 +180,7 @@ export class FriendsDatabase {
 		if (receiver?.settings.blockFriendRequests) {
 			throw new Chat.ErrorMessage(`${receiver.name} is blocking friend requests.`);
 		}
-		let buf = Utils.html`/uhtml sent,<button class="button" name="send" value="/friends accept ${user.id}">Accept</button> | `;
+		let buf = Utils.html`/uhtml sent-${user.id},<button class="button" name="send" value="/friends accept ${user.id}">Accept</button> | `;
 		buf += Utils.html`<button class="button" name="send" value="/friends reject ${user.id}">Deny</button><br /> `;
 		buf += `<small>(You can also stop this user from sending you friend requests with <code>/ignore</code>)</small>`;
 		const disclaimer = (
@@ -194,7 +205,7 @@ export class FriendsDatabase {
 			user.name
 		);
 		sendPM(
-			`/uhtml undo,<button class="button" name="send" value="/friends undorequest ${Utils.escapeHTML(receiverID)}">` +
+			`/uhtml undo-${receiverID},<button class="button" name="send" value="/friends undorequest ${Utils.escapeHTML(receiverID)}">` +
 			`<i class="fa fa-undo"></i> Undo</button>`, user.name
 		);
 		sendPM(disclaimer, user.id);

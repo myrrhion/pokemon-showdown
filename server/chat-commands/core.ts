@@ -393,6 +393,7 @@ export const crqHandlers: {[k: string]: Chat.CRQHandler} = {
 			autoconfirmed: !!targetUser.autoconfirmed,
 			status: targetUser.getStatus(),
 			rooms: roomList,
+			friended: user.friends?.has(targetUser.id),
 		};
 	},
 	roomlist(target, user, trustable) {
@@ -1603,8 +1604,9 @@ export const commands: Chat.ChatCommands = {
 		if (Users.Auth.isAuthLevel(target)) {
 			user.settings.blockChallenges = target;
 			this.sendReply(this.tr`You are now blocking challenges, except from staff and ${target}.`);
-		} else if (target === 'autoconfirmed' || target === 'trusted' || target === 'unlocked') {
+		} else if (target === 'autoconfirmed' || target === 'trusted' || target === 'unlocked' || target === 'friends') {
 			user.settings.blockChallenges = target;
+			if (target === 'friends') target = 'friended';
 			target = this.tr(target);
 			this.sendReply(this.tr`You are now blocking challenges, except from staff and ${target} users.`);
 		} else {
@@ -1871,7 +1873,7 @@ process.nextTick(() => {
 	// We might want to migrate most of this to a JSON schema of command attributes.
 	Chat.multiLinePattern.register(
 		'>>>? ', '/(?:room|staff)intro ', '/(?:staff)?topic ', '/(?:add|widen)datacenters ', '/bash ', '!code ', '/code ', '/modnote ', '/mn ',
-		'/eval', '!eval', '/evalbattle',
+		'/eval', '!eval', '/evalbattle', '/evalsql', '>>sql',
 		'/importinputlog '
 	);
 });

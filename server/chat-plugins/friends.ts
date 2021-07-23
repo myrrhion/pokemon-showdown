@@ -53,9 +53,7 @@ export const Friends = new class {
 		const friends = await Chat.Friends.getFriends(user.id);
 		const message = `/nonotify Your friend ${Utils.escapeHTML(user.name)} has just connected!`;
 		for (const f of friends) {
-			const {user1, user2} = f;
-			const friend = user1 !== user.id ? user1 : user2;
-			const curUser = Users.get(friend as string);
+			const curUser = Users.get(f.friend);
 			if (curUser?.settings.allowFriendNotifications) {
 				curUser.send(`|pm|&|${curUser.getIdentity()}|${message}`);
 			}
@@ -181,15 +179,13 @@ export const Friends = new class {
 	}
 	updateSpectatorLists(user: User) {
 		if (!user.friends) return; // probably should never happen
-		if (user.settings.displayBattlesToFriends) {
-			for (const id of user.friends) {
-				// should only work if theyre on that userid, since friends list is by userid
-				const curUser = Users.getExact(id);
-				if (curUser) {
-					for (const conn of curUser.connections) {
-						if (conn.openPages?.has('friends-spectate')) {
-							void Chat.parse('/friends view spectate', null, curUser, conn);
-						}
+		for (const id of user.friends) {
+			// should only work if theyre on that userid, since friends list is by userid
+			const curUser = Users.getExact(id);
+			if (curUser) {
+				for (const conn of curUser.connections) {
+					if (conn.openPages?.has('friends-spectate')) {
+						void Chat.parse('/friends view spectate', null, curUser, conn);
 					}
 				}
 			}
@@ -299,8 +295,8 @@ export const commands: Chat.ChatCommands = {
 			this.refreshPage('friends-received');
 			if (targetUser) {
 				sendPM(`/text ${user.name} accepted your friend request!`, targetUser.id);
-				sendPM(`/uhtmlchange sent,`, targetUser.id);
-				sendPM(`/uhtmlchange undo,`, targetUser.id);
+				sendPM(`/uhtmlchange sent-${targetUser.id},`, targetUser.id);
+				sendPM(`/uhtmlchange undo-${targetUser.id},`, targetUser.id);
 			}
 			await Chat.Friends.updateUserCache(user);
 			if (targetUser) await Chat.Friends.updateUserCache(targetUser);
@@ -451,6 +447,22 @@ export const commands: Chat.ChatCommands = {
 		],
 	},
 	friendshelp() {
+		this.runBroadcast();
+		if (this.broadcasting) {
+			return this.sendReplyBox([
+				`<code>/friend list</code> - View current friends.`,
+				`<code>/friend add [username]</code> - Send a friend request to [username], if you don't have them added.`,
+				`<code>/friend remove [username]</code> OR <code>/unfriend [username]</code>  - Unfriend the user.`,
+				`<code>/friend accept [username]</code> - Accepts the friend request from [username], if it exists.`,
+				`<code>/friend reject [username]</code> - Rejects the friend request from [username], if it exists.`,
+				`<code>/friend toggle [off/on]</code> - Enable or disable receiving of friend requests.`,
+				`<code>/friend hidenotifications</code> OR <code>hidenotifs</code> - Opts out of receiving friend notifications.`,
+				`<code>/friend viewnotifications</code> OR <code>viewnotifs</code> - Opts into view friend notifications.`,
+				`<code>/friend listdisplay [on/off]</code> - Opts [in/out] of letting others view your friends list.`,
+				`<code>/friend viewlist [user]</code> - View the given [user]'s friend list, if they're allowing others to see.`,
+				`<code>/friends sharebattles [on|off]</code> - Allow or disallow your friends from seeing your ongoing battles.`,
+			].join('<br />'));
+		}
 		return this.parse('/join view-friends-help');
 	},
 };
@@ -563,7 +575,7 @@ export const pages: Chat.PageTable = {
 			buf += `<button class="button${send_login_data ? `` : ' disabled'}" name="send" `;
 			buf += `value="/friends showlogins">Enable</button><br /><br />`;
 
-			buf += `<strong>Allow friends to see my battles:</strong><br />`;
+			buf += `<strong>Allow friends to see my hidden battles on the spectator list:</strong><br />`;
 			buf += `<button class="button${settings.displayBattlesToFriends ? `` : ' disabled'}" name="send" `;
 			buf += `value="/friends sharebattles off">Disable</button> `;
 			buf += `<button class="button${settings.displayBattlesToFriends ? ` disabled` : ``}" name="send" `;
@@ -575,8 +587,8 @@ export const pages: Chat.PageTable = {
 			buf += `<h3>Spectate your friends:</h3>`;
 
 			const toggleMessage = user.settings.displayBattlesToFriends ?
-				' disallow your friends from seeing your battles' :
-				' allow your friends to see your battles';
+				' disallow your friends from seeing your hidden battles' :
+				' allow your friends to see your hidden battles';
 			buf += `<i><small>Use the <a roomid="view-friends-settings">settings page</a> to ${toggleMessage} on this page.</small></i><br />`;
 			buf += `<br />`;
 			if (!user.friends?.size) {
@@ -597,7 +609,10 @@ export const pages: Chat.PageTable = {
 			const battles: [User, string][] = [];
 			for (const friend of friends) {
 				const curBattles: [User, string][] = [...friend.inRooms]
-					.filter(id => Rooms.get(id)?.battle)
+					.filter(id => {
+						const room = Rooms.get(id)?.battle;
+						return room && (!room.roomid.endsWith('pw') || friend.settings.displayBattlesToFriends);
+					})
 					.map(id => [friend, id]);
 				if (!curBattles.length) continue;
 				battles.push(...curBattles);
