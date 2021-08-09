@@ -21,6 +21,9 @@ const STATUS_TITLES: {[k: string]: string} = {
 	offline: 'Offline',
 };
 
+// once every 15 minutes
+const LOGIN_NOTIFY_THROTTLE = 15 * 60 * 1000;
+
 export const Friends = new class {
 	async notifyPending(user: User) {
 		if (user.settings.blockFriendRequests) return;
@@ -47,7 +50,7 @@ export const Friends = new class {
 	}
 	async notifyConnection(user: User) {
 		const connected = await Chat.Friends.getLastLogin(user.id);
-		if (connected && (Date.now() - connected) < 2 * 60 * 1000) {
+		if (connected && (Date.now() - connected) < LOGIN_NOTIFY_THROTTLE) {
 			return;
 		}
 		const friends = await Chat.Friends.getFriends(user.id);
@@ -142,7 +145,7 @@ export const Friends = new class {
 		if (login && typeof login === 'number' && !user?.connected) {
 			// THIS IS A TERRIBLE HACK BUT IT WORKS OKAY
 			const time = Chat.toTimestamp(new Date(Number(login)), {human: true});
-			buf += `Last login: ${time.split(' ').reverse().join(', on ')}`;
+			buf += `Last seen: ${time.split(' ').reverse().join(', on ')}`;
 			buf += ` (${Chat.toDurationString(Date.now() - login, {precision: 1})} ago)`;
 		} else if (typeof login === 'string') {
 			buf += `${login}`;
@@ -347,7 +350,7 @@ export const commands: Chat.ChatCommands = {
 		hidenotifications: 'viewnotifications',
 		viewnotifs: 'viewnotifications',
 		viewnotifications(target, room, user, connection, cmd) {
-			Friends.checkCanUse(this);
+			// Friends.checkCanUse(this);
 			const setting = user.settings.allowFriendNotifications;
 			target = target.trim();
 			if (!cmd.includes('hide') || target && this.meansYes(target)) {
@@ -598,7 +601,7 @@ export const pages: Chat.PageTable = {
 			const friends = [];
 			for (const friendID of user.friends) {
 				const friend = Users.getExact(friendID);
-				if (!friend || !friend.settings.displayBattlesToFriends) continue;
+				if (!friend) continue;
 				friends.push(friend);
 			}
 			if (!friends.length) {
@@ -610,8 +613,11 @@ export const pages: Chat.PageTable = {
 			for (const friend of friends) {
 				const curBattles: [User, string][] = [...friend.inRooms]
 					.filter(id => {
-						const room = Rooms.get(id)?.battle;
-						return room && (!room.roomid.endsWith('pw') || friend.settings.displayBattlesToFriends);
+						const battle = Rooms.get(id)?.battle;
+						return (
+							battle && battle.playerTable[friend.id] &&
+							(!battle.roomid.endsWith('pw') || friend.settings.displayBattlesToFriends)
+						);
 					})
 					.map(id => [friend, id]);
 				if (!curBattles.length) continue;
@@ -651,6 +657,9 @@ export const handlers: Chat.Handlers = {
 	},
 	onBattleLeave(user, room) {
 		return Friends.updateSpectatorLists(user);
+	},
+	onDisconnect(user) {
+		void Chat.Friends.writeLogin(user.id);
 	},
 };
 
