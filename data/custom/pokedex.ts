@@ -66,7 +66,7 @@ export const Pokedex: {[k: string]: ModdedSpeciesData} = {
 		abilities: {0: "Thick Fat", 1: "Sturdy", H: "Inner Focus"},
 		heightm: 25,
 		weightkg: 0,
-		color: "Gray",
+		color: "Brown",
 		eggGroups: ["Human-Like"],
 		changesFrom: "Machamp-Albea",
 	},

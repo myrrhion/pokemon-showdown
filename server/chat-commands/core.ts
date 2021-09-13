@@ -16,6 +16,7 @@
 /* eslint no-else-return: "error" */
 import {Utils} from '../../lib';
 import type {UserSettings} from '../users';
+import type {GlobalPermission} from '../user-groups';
 
 const avatarTable = new Set([
 	'aaron',
@@ -894,7 +895,8 @@ export const commands: Chat.ChatCommands = {
 		if (user.tempGroup === group) {
 			return this.errorReply(this.tr`You already have the temporary symbol '${group}'.`);
 		}
-		if (!Users.Auth.isValidSymbol(group) || !(group in Config.groups) || group === Users.SECTIONLEADER_SYMBOL) {
+		if (!Users.Auth.isValidSymbol(group) || !(group in Config.groups) ||
+			(group === Users.SECTIONLEADER_SYMBOL && !(Users.globalAuth.sectionLeaders.has(user.id) || user.can('bypassall')))) {
 			return this.errorReply(this.tr`You must specify a valid group symbol.`);
 		}
 		if (!isShow && Config.groups[group].rank > Config.groups[user.tempGroup].rank) {
@@ -1852,7 +1854,8 @@ export const commands: Chat.ChatCommands = {
 		}
 
 		const curHandler = Chat.parseCommand(`/${closestHelp}`)?.handler;
-		if (curHandler?.isPrivate && !user.can('lock')) {
+		const requiredPerm = curHandler?.requiredPermission || 'lock';
+		if (curHandler?.isPrivate && !user.can(requiredPerm as GlobalPermission)) {
 			return this.errorReply(this.tr`The command '/${target}' does not exist.`);
 		}
 

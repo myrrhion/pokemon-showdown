@@ -40,7 +40,7 @@ import {MinorActivity, MinorActivityData} from './room-minor-activity';
 import {Roomlogs} from './roomlogs';
 import * as crypto from 'crypto';
 import {RoomAuth} from './user-groups';
-import {PartialModlogEntry, Modlog, MODLOG_PATH, MODLOG_DB_PATH} from './modlog';
+import {PartialModlogEntry, mainModlog} from './modlog';
 
 /*********************************************************
  * the Room object.
@@ -943,6 +943,8 @@ export abstract class BasicRoom {
 		this.settings.title = newTitle;
 		this.saveSettings();
 
+		Punishments.renameRoom(oldID, newID);
+
 		void this.log.rename(newID);
 	}
 
@@ -1124,7 +1126,7 @@ export abstract class BasicRoom {
 		}
 		this.logUserStatsInterval = null;
 
-		void this.log.destroy(true);
+		void this.log.destroy();
 
 		Rooms.rooms.delete(this.roomid);
 		if (this.roomid === 'lobby') Rooms.lobby = null;
@@ -1161,7 +1163,7 @@ export class GlobalRoomState {
 		try {
 			this.settingsList = require('../config/chatrooms.json');
 			if (!Array.isArray(this.settingsList)) this.settingsList = [];
-		} catch (e) {} // file doesn't exist [yet]
+		} catch {} // file doesn't exist [yet]
 
 		if (!this.settingsList.length) {
 			this.settingsList = [{
@@ -1229,8 +1231,6 @@ export class GlobalRoomState {
 			// of GlobalRoom can have.
 			this.ladderIpLog = new Streams.WriteStream({write() { return undefined; }});
 		}
-		// Create writestream for modlog
-		Rooms.Modlog.initialize('global');
 
 		this.reportUserStatsInterval = setInterval(
 			() => this.reportUserStats(),
@@ -1250,7 +1250,7 @@ export class GlobalRoomState {
 		let lastBattle;
 		try {
 			lastBattle = FS('logs/lastbattle.txt').readSync('utf8');
-		} catch (e) {}
+		} catch {}
 		this.lastBattle = Number(lastBattle) || 0;
 		this.lastWrittenBattle = this.lastBattle;
 	}
@@ -1878,7 +1878,7 @@ function getRoom(roomid?: string | BasicRoom) {
 }
 
 export const Rooms = {
-	Modlog: new Modlog(MODLOG_PATH, MODLOG_DB_PATH, {sqliteOptions: Config.modlogsqliteoptions}),
+	Modlog: mainModlog,
 	/**
 	 * The main roomid:Room table. Please do not hold a reference to a
 	 * room long-term; just store the roomid and grab it from here (with
