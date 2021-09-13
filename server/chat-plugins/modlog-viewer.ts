@@ -194,6 +194,7 @@ async function getModlog(
 	if (onlyNotes) search.action.push({search: 'NOTE'});
 
 	const response = await Rooms.Modlog.search(roomid, search, maxLines, onlyPunishments);
+	if (!response) return connection.popup(`The moderator log is currently disabled.`);
 
 	connection.send(
 		prettifyResults(
@@ -346,7 +347,7 @@ export const commands: Chat.ChatCommands = {
 	},
 	mls: 'modlogstats',
 	modlogstats(target, room, user) {
-		this.checkCan('globalban');
+		this.checkCan('lock');
 		target = toID(target);
 		if (!target) return this.parse(`/help modlogstats`);
 		return this.parse(`/join view-modlogstats-${target}`);
@@ -356,7 +357,7 @@ export const commands: Chat.ChatCommands = {
 
 export const pages: Chat.PageTable = {
 	async modlogstats(query, user) {
-		this.checkCan('globalban');
+		this.checkCan('lock');
 		const target = toID(query.shift());
 		if (!target || target.length > 18) {
 			return this.errorReply(`Invalid userid - must be between 1 and 18 characters long.`);
@@ -369,7 +370,7 @@ export const pages: Chat.PageTable = {
 				isExact: true,
 			}], note: [], ip: [], action: [], actionTaker: [],
 		}, 1000);
-		if (!entries.results.length) {
+		if (!entries?.results.length) {
 			return this.errorReply(`No data found.`);
 		}
 		const punishmentTable = new Utils.Multiset();

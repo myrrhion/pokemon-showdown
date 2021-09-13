@@ -24,9 +24,12 @@ To reload chat commands:
 */
 
 import type {RoomPermission, GlobalPermission} from './user-groups';
-import {FriendsDatabase, PM} from './friends';
 import type {Punishment} from './punishments';
 import type {PartialModlogEntry} from './modlog';
+import {FriendsDatabase, PM} from './friends';
+import {SQL, Repl, FS, Utils} from '../lib';
+import {Dex} from '../sim';
+import {resolve} from 'path';
 
 export type PageHandler = (this: PageContext, query: string[], user: User, connection: Connection)
 => Promise<string | null | void> | string | null | void;
@@ -52,6 +55,7 @@ export type AnnotatedChatHandler = ChatHandler & {
 	isPrivate: boolean,
 	disabled: boolean,
 	aliases: string[],
+	requiredPermission?: GlobalPermission | RoomPermission,
 };
 export interface ChatCommands {
 	[k: string]: ChatHandler | string | string[] | ChatCommands;
@@ -133,7 +137,9 @@ const MAX_PARSE_RECURSION = 10;
 const VALID_COMMAND_TOKENS = '/!';
 const BROADCAST_TOKEN = '!';
 
-import {FS, Utils} from '../lib';
+const PLUGIN_DATABASE_PATH = './databases/chat-plugins.db';
+const MAX_PLUGIN_LOADING_DEPTH = 3;
+
 import {formatText, linkRegex, stripFormatting} from './chat-formatter';
 
 // @ts-ignore no typedef available
@@ -445,7 +451,7 @@ export class PageContext extends MessageContext {
 		try {
 			if (typeof handler !== 'function') this.pageDoesNotExist();
 			res = await handler.call(this, parts, this.user, this.connection);
-		} catch (err) {
+		} catch (err: any) {
 			if (err.name?.endsWith('ErrorMessage')) {
 				if (err.message) this.errorReply(err.message);
 				return;
@@ -592,7 +598,7 @@ export class CommandContext extends MessageContext {
 
 				message = this.checkChat(message);
 			}
-		} catch (err) {
+		} catch (err: any) {
 			if (err.name?.endsWith('ErrorMessage')) {
 				this.errorReply(err.message);
 				this.update();
@@ -1093,6 +1099,17 @@ export class CommandContext extends MessageContext {
 				}
 			}
 			if (targetUser) {
+				// this accounts for users who are autoconfirmed on another alt, but not registered
+				if (!(user.registered || user.autoconfirmed)) {
+					this.sendReply(
+						this.tr`|html|<div class="message-error">You must be registered to send private messages.</div>` +
+						this.tr`You may register in the <button name="openOptions"><i class="fa fa-cog"></i> Options</button> menu.`
+					);
+					throw new Chat.Interruption();
+				}
+				if (!(targetUser.registered || targetUser.autoconfirmed)) {
+					throw new Chat.ErrorMessage(this.tr`That user is unregistered and cannot be PMed.`);
+				}
 				if (lockType && !targetUser.can('lock')) {
 					this.sendReply(`|html|<a href="view-help-request--appeal" class="button">${this.tr`Get help with this`}</a>`);
 					throw new Chat.ErrorMessage(this.tr`You are ${lockType} and can only private message members of the global moderation team. ${lockExpiration}`);
@@ -1136,7 +1153,7 @@ export class CommandContext extends MessageContext {
 			/[\u0300-\u036f\u0483-\u0489\u0610-\u0615\u064B-\u065F\u0670\u06D6-\u06DC\u06DF-\u06ED\u0E31\u0E34-\u0E3A\u0E47-\u0E4E]{3,}/g,
 			''
 		);
-		if (/[\u115f\u1160\u239b-\u23b9]/.test(message)) {
+		if (/[\u3164\u115f\u1160\u239b-\u23b9]/.test(message)) {
 			throw new Chat.ErrorMessage(this.tr`Your message contains banned characters.`);
 		}
 
@@ -1304,7 +1321,7 @@ export class CommandContext extends MessageContext {
 						this.errorReply(`This image is missing a width/height attribute: <${tagContent}>`);
 						throw new Chat.ErrorMessage(`Images without predefined width/height cause problems with scrolling because loading them changes their height.`);
 					}
-					const srcMatch = / src ?= ?"?([^ "]+)(?: ?")?/i.exec(tagContent);
+					const srcMatch = / src ?= ?(?:"|')?([^ "']+)(?: ?(?:"|'))?/i.exec(tagContent);
 					if (srcMatch) {
 						this.checkEmbedURI(srcMatch[1]);
 					} else {
@@ -1677,6 +1694,46 @@ export const Chat = new class {
 		return translated;
 	}
 
+	/**
+	 * SQL handler
+	 *
+	 * All chat plugins share one database.
+	 * Chat.databaseReadyPromise will be truthy if the database is not yet ready.
+	 */
+	database = SQL(module, {file: ('Config' in global && Config.nofswriting) ? ':memory:' : PLUGIN_DATABASE_PATH});
+	databaseReadyPromise: Promise<void> | null = null;
+
+	async prepareDatabase() {
+		if (!PM.isParentProcess) return; // We don't need a database in a subprocess that requires Chat.
+		if (!Config.usesqlite) return;
+		// check if we have the db_info table, which will always be present unless the schema needs to be initialized
+		const {hasDBInfo} = await this.database.get(
+			`SELECT count(*) AS hasDBInfo FROM sqlite_master WHERE type = 'table' AND name = 'db_info'`
+		);
+		if (!hasDBInfo) await this.database.runFile('./databases/schemas/chat-plugins.sql');
+
+		const result = await this.database.get(
+			`SELECT value as curVersion FROM db_info WHERE key = 'version'`
+		);
+		const curVersion = parseInt(result.curVersion);
+		if (!curVersion) throw new Error(`db_info table is present, but schema version could not be parsed`);
+
+		// automatically run migrations of the form "v{number}.sql" in the migrations/chat-plugins folder
+		const migrationsFolder = './databases/migrations/chat-plugins';
+		const migrationsToRun = [];
+		for (const migrationFile of (await FS(migrationsFolder).readdir())) {
+			const migrationVersion = parseInt(/v(\d+)\.sql$/.exec(migrationFile)?.[1] || '');
+			if (!migrationVersion) continue;
+			if (migrationVersion > curVersion) migrationsToRun.push({version: migrationVersion, file: migrationFile});
+		}
+		Utils.sortBy(migrationsToRun, ({version}) => version);
+		for (const {file} of migrationsToRun) {
+			await this.database.runFile(resolve(migrationsFolder, file));
+		}
+
+		Chat.destroyHandlers.push(() => Chat.database?.destroy());
+	}
+
 	readonly MessageContext = MessageContext;
 	readonly CommandContext = CommandContext;
 	readonly PageContext = PageContext;
@@ -1756,10 +1813,27 @@ export const Chat = new class {
 
 	packageData: AnyObject = {};
 
+	loadPluginDirectory(dir: string, depth = 0) {
+		for (const file of FS(dir).readdirSync()) {
+			const path = resolve(dir, file);
+			if (FS(path).isDirectorySync()) {
+				depth++;
+				if (depth > MAX_PLUGIN_LOADING_DEPTH) continue;
+				this.loadPluginDirectory(path, depth);
+			} else {
+				try {
+					this.loadPlugin(path);
+				} catch (e) {
+					Monitor.crashlog(e, "A loading chat plugin");
+					continue;
+				}
+			}
+		}
+	}
 	loadPlugin(file: string) {
 		let plugin;
 		if (file.endsWith('.ts') || file.endsWith('.js')) {
-			plugin = require(`./${file.slice(0, -3)}`);
+			plugin = require(file.slice(0, -3));
 		} else {
 			return;
 		}
@@ -1785,6 +1859,7 @@ export const Chat = new class {
 			entry.hasRoomPermissions = /\bthis\.(checkCan|can)\([^,)\n]*, [^,)\n]*,/.test(handlerCode);
 			entry.broadcastable = cmd.endsWith('help') || /\bthis\.(?:(check|can|run|should)Broadcast)\(/.test(handlerCode);
 			entry.isPrivate = /\bthis\.(?:privately(Check)?Can|commandDoesNotExist)\(/.test(handlerCode);
+			entry.requiredPermission = /this\.(?:checkCan|privately(?:Check)?Can)\(['`"]([a-zA-Z0-9]+)['"`](\)|, )/.exec(handlerCode)?.[1];
 			if (!entry.aliases) entry.aliases = [];
 
 			// assign properties from the base command if the current command uses CommandContext.run.
@@ -1858,28 +1933,10 @@ export const Chat = new class {
 
 		// Install plug-in commands and chat filters
 
-		// All resulting filenames will be relative to basePath
-		const getFiles = (basePath: string, path: string): string[] => {
-			const filesInThisDir = FS(`${basePath}/${path}`).readdirSync();
-			let allFiles: string[] = [];
-			for (const file of filesInThisDir) {
-				const fileWithPath = path + (path ? '/' : '') + file;
-				if (FS(`${basePath}/${fileWithPath}`).isDirectorySync()) {
-					if (file.startsWith('.')) continue;
-					allFiles = allFiles.concat(getFiles(basePath, fileWithPath));
-				} else {
-					allFiles.push(fileWithPath);
-				}
-			}
-			return allFiles;
-		};
 
 		Chat.commands = Object.create(null);
 		Chat.pages = Object.create(null);
-		const coreFiles = FS('server/chat-commands').readdirSync();
-		for (const file of coreFiles) {
-			this.loadPlugin(`chat-commands/${file}`);
-		}
+		this.loadPluginDirectory('server/chat-commands');
 		Chat.baseCommands = Chat.commands;
 		Chat.basePages = Chat.pages;
 		Chat.commands = Object.assign(Object.create(null), Chat.baseCommands);
@@ -1889,27 +1946,12 @@ export const Chat = new class {
 		this.loadPluginData(Config, 'config');
 		this.loadPluginData(Tournaments, 'tournaments');
 
-		let files = FS('server/chat-plugins').readdirSync();
-		try {
-			if (FS('server/chat-plugins/private').isDirectorySync()) {
-				files = files.concat(getFiles('server/chat-plugins', 'private'));
-			}
-		} catch (err) {
-			if (err.code !== 'ENOENT') throw err;
-		}
-
-		for (const file of files) {
-			try {
-				this.loadPlugin(`chat-plugins/${file}`);
-			} catch (e) {
-				Monitor.crashlog(e, "A loading chat plugin");
-				continue;
-			}
-		}
+		this.loadPluginDirectory('server/chat-plugins');
 		Chat.oldPlugins = {};
 		// lower priority should run later
 		Utils.sortBy(Chat.filters, filter => -(filter.priority || 0));
 	}
+
 	destroy() {
 		for (const handler of Chat.destroyHandlers) {
 			handler();
@@ -2063,7 +2105,7 @@ export const Chat = new class {
 		try {
 			// eslint-disable-next-line no-new
 			new RegExp(word);
-		} catch (e) {
+		} catch (e: any) {
 			throw new Chat.ErrorMessage(
 				e.message.startsWith('Invalid regular expression: ') ?
 					e.message :
@@ -2368,6 +2410,29 @@ export const Chat = new class {
 		return [Math.round(width * ratio), Math.round(height * ratio), true];
 	}
 
+	refreshPageFor(
+		pageid: string,
+		roomid: Room | RoomID,
+		checkPrefix = false,
+		ignoreUsers: ID[] | null = null
+	) {
+		const room = Rooms.get(roomid);
+		if (!room) return false;
+		for (const id in room.users) {
+			if (ignoreUsers?.includes(id as ID)) continue;
+			const u = room.users[id];
+			for (const conn of u.connections) {
+				if (conn.openPages) {
+					for (const page of conn.openPages) {
+						if ((checkPrefix ? page.startsWith(pageid) : page === pageid)) {
+							void this.parse(`/j view-${page}`, room, u, conn);
+						}
+					}
+				}
+			}
+		}
+	}
+
 	/**
 	 * Notifies a targetUser that a user was blocked from reaching them due to a setting they have enabled.
 	 */
@@ -2462,4 +2527,28 @@ export interface Monitor {
 	label: string;
 	condition?: string;
 	monitor?: MonitorHandler;
+}
+
+// explicitly check this so it doesn't happen in other child processes
+if (!process.send) {
+	Chat.database.spawn(Config.chatdbprocesses || 1);
+	Chat.databaseReadyPromise = Chat.prepareDatabase();
+	// we need to make sure it is explicitly JUST the child of the original parent db process
+	// no other child processes
+} else if (process.mainModule === module) {
+	global.Monitor = {
+		crashlog(error: Error, source = 'A chat child process', details: AnyObject | null = null) {
+			const repr = JSON.stringify([error.name, error.message, source, details]);
+			process.send!(`THROW\n@!!@${repr}\n${error.stack}`);
+		},
+	};
+	process.on('uncaughtException', err => {
+		Monitor.crashlog(err, 'A chat database process');
+	});
+	process.on('unhandledRejection', err => {
+		Monitor.crashlog(err as Error, 'A chat database process');
+	});
+	global.Config = require('./config-loader').Config;
+	// eslint-disable-next-line no-eval
+	Repl.start('chat-db', cmd => eval(cmd));
 }
