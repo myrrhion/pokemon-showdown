@@ -6,7 +6,7 @@ import {Tags} from '../data/tags';
 const DEFAULT_MOD = 'gen8';
 const MAIN_FORMATS = `${__dirname}/../config/formats`;
 const MAIN_FORMATS_BU = `${__dirname}/../.config-dist/formats`;
-const CUSTOM_FORMATS = `${__dirname}/../config/custom-formats`;
+//const CUSTOM_FORMATS = `${__dirname}/../config/custom-formats`;
 
 export interface FormatData extends Partial<Format>, EventMethods {
 	name: string;
