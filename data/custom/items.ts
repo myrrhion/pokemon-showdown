@@ -2,6 +2,8 @@ export const Items: {[itemid: string]: ItemData} = {
 	brassknuckles: {
 		name: "Brass Knuckles",
 		spritenum: 261,
+		desc: "Increases punch",
+		shortDesc: "Increases punch damage by 1.1x power.",
 		isCustom: true,
 		fling: {
 			basePower: 40,
@@ -9,7 +11,7 @@ export const Items: {[itemid: string]: ItemData} = {
 		onBasePower(basePower, attacker, defender, move) {
 			if (move.flags['punch']) {
 				this.debug('Brass Knuckle boost');
-				return this.chainModify([4915, 4096]);
+				return this.chainModify(1.1);
 			}
 		},
 		num: 456,
