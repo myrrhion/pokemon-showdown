@@ -365,4 +365,53 @@ export const DefaultText: {[k: string]: DefaultText} = {
 	crash: {
 		damage: "  [POKEMON] kept going and crashed!",
 	},
+
+	// Custom Stuff
+	// weather
+	duststorm: {
+		weatherName: "Dust Storm",
+		start: "  A dust storm kicked up!",
+		end: "  The dust storm subsided.",
+		upkeep: "  (The sandstorm is raging.)",
+		damage: "  [POKEMON] is buffeted by the sandstorm!",
+	},
+	bloodmoon: {
+		weatherName: "Blood Moon",
+		start: "  The sunlight turned harsh!",
+		end: "  The harsh sunlight faded.",
+		upkeep: "  (The sunlight is strong.)",
+	},
+	fog: {
+		weatherName: "Fog",
+		start: "  It started to rain!",
+		end: "  The rain stopped.",
+		upkeep: "  (The air is thick as soup.)",
+	},
+	pollen: {
+		weatherName: "Hail",
+		start: "  It started to hail!",
+		end: "  The hail stopped.",
+		upkeep: "  (The hail is crashing down.)",
+		damage: "  [POKEMON] is buffeted by the hail!",
+	},
+	magnetosphere: {
+		weatherName: "Intense Sun",
+		start: "  The sunlight turned extremely harsh!",
+		end: "  The extremely harsh sunlight faded.",
+		block: "  The extremely harsh sunlight was not lessened at all!",
+		blockMove: "  The Water-type attack evaporated in the harsh sunlight!",
+	},
+	fightingaura: {
+		weatherName: "Heavy Rain",
+		start: "  A heavy rain began to fall!",
+		end: "  The heavy rain has lifted!",
+		block: "  There is no relief from this heavy rain!",
+		blockMove: "  The Fire-type attack fizzled out in the heavy rain!",
+	},
+	strongwind: {
+		weatherName: "Strong Winds",
+		start: "  The weather had been cleared by Strong winds!",
+		end: "  The strong winds subside!",
+		block: "  The mysterious strong winds blow on regardless!",
+	},
 };

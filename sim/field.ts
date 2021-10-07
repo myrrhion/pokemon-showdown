@@ -18,6 +18,7 @@ export class Field {
 	terrain: ID;
 	terrainState: EffectState;
 	pseudoWeather: {[id: string]: EffectState};
+	typedWeather: {[id: string]: string};
 
 	constructor(battle: Battle) {
 		this.battle = battle;
@@ -30,6 +31,7 @@ export class Field {
 		this.terrain = '';
 		this.terrainState = {id: ''};
 		this.pseudoWeather = {};
+		this.typedWeather = {};
 	}
 
 	toJSON(): AnyObject {
@@ -230,5 +232,33 @@ export class Field {
 
 		// get rid of some possibly-circular references
 		(this as any).battle = null!;
+	}
+	/* Custom code
+	 * The following is custom code to allow for easier pseudo weathers
+	 * Designed for Lockemon.
+	 */
+
+	addTypedWeather(
+		typing: string | ID,
+		status: string | Condition,
+		source: Pokemon | 'debug' | null = null,
+		sourceEffect: Effect | null = null
+	): boolean {
+		status = this.battle.dex.conditions.get(status);
+		const success = this.addPseudoWeather(status, source, sourceEffect);
+		if (success) {
+			this.typedWeather[typing] = status.id;
+		}
+		return success;
+	}
+
+	getTypedWeather(status: string) {
+		return this.getPseudoWeather(this.typedWeather[status]);
+	}
+
+	removeTypedWeather(status: string) {
+		if (this.removePseudoWeather(this.typedWeather[status])) {
+			delete this.typedWeather[status];
+		}
 	}
 }

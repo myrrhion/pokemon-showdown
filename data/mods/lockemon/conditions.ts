@@ -1,5 +1,23 @@
 export const Conditions: {[k: string]: ModdedConditionData} = {
-
+	strongwinds: {
+		name: 'strongwinds',
+		effectType: 'Weather',
+		duration: 5,
+		onFieldStart(field, source, effect) {
+			this.add('-weather', 'DeltaStream', '[from] ability: ' + effect, '[of] ' + source);
+			this.field.removeTypedWeather("climate");
+			this.field.removeTypedWeather("irritant");
+			this.field.removeTypedWeather("energy");
+		},
+		onFieldResidualOrder: 1,
+		onFieldResidual() {
+			this.add('-weather', 'DeltaStream', '[upkeep]');
+			this.eachEvent('Weather');
+		},
+		onFieldEnd() {
+			this.add('-weather', 'none');
+		},
+	},
 	raindance: {
 		name: 'RainDance',
 		effectType: 'Weather',
@@ -217,12 +235,17 @@ export const Conditions: {[k: string]: ModdedConditionData} = {
 			this.add('-weather', 'none');
 		},
 	},
-	strongwinds: {
-		name: 'strongwinds',
-		effectType: 'Weather',
-		duration: 0,
-		onEffectivenessPriority: -1,
-		onEffectiveness(typeMod, target, type, move) {
+
+	fog: {
+		name: 'fog',
+		effectType: 'Condition',
+		duration: 5,
+		durationCallback(source, effect) {
+			if (source?.hasItem('icyrock')) {
+				return 8;
+			}
+			return 5;
+		},		onEffectiveness(typeMod, target, type, move) {
 			if (move && move.effectType === 'Move' && move.category !== 'Status' && type === 'Flying' && typeMod > 0) {
 				this.add('-activate', '', 'deltastream');
 				return 0;
@@ -240,4 +263,5 @@ export const Conditions: {[k: string]: ModdedConditionData} = {
 			this.add('-weather', 'none');
 		},
 	},
+
 };

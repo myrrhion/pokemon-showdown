@@ -1,3 +1,8 @@
 export const Moves: {[moveid: string]: ModdedMoveData} = {
-
+	raindance: {
+		inherit: true,
+		weather: undefined,
+		pseudoWeather: "raindance",
+		typedWeather: "climate",
+	},
 };
