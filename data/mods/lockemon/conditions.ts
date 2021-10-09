@@ -209,6 +209,7 @@ export const Conditions: {[k: string]: ModdedConditionData} = {
 	hail: {
 		inherit: true,
 		duration: 5,
+		effectType: 'Condition',
 		durationCallback(source, effect) {
 			if (source?.hasItem('icyrock')) {
 				return 8;
