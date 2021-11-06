@@ -131,6 +131,7 @@ class LoginServerInstance {
 
 		try {
 			const request = Net(`${this.uri}action.php`);
+			console.log(dataList);
 			let buffer = await request.post({
 				body: {
 					serverid: Config.serverid,
