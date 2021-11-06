@@ -140,7 +140,7 @@ class LoginServerInstance {
 				},
 				timeout: LOGIN_SERVER_TIMEOUT,
 			});
-			// console.log('RESPONSE: ' + buffer);
+			console.log('RESPONSE: ' + buffer);
 			const data = parseJSON(buffer).json;
 			if (buffer.startsWith(`[{"actionsuccess":true,`)) {
 				buffer = 'stream interrupt';

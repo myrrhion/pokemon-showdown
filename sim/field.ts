@@ -253,9 +253,19 @@ export class Field {
 	}
 
 	getTypedWeather(status: string) {
-		return this.getPseudoWeather(this.typedWeather[status]);
+		const out = this.getPseudoWeather(this.typedWeather[status]);
+		if (out === null) {
+			this.removeTypedWeather(status);
+		}
+		return out;
 	}
-
+	isTypedWeather(type: string, weather: string | string[]) {
+		const typedWeather = this.getTypedWeather(type);
+		if (!Array.isArray(weather)) {
+			return toID(typedWeather) === toID(weather);
+		}
+		return weather.map(toID).includes(toID(typedWeather));
+	}
 	removeTypedWeather(status: string) {
 		if (this.removePseudoWeather(this.typedWeather[status])) {
 			delete this.typedWeather[status];
