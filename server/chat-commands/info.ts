@@ -26,7 +26,9 @@ export function getCommonBattles(
 			(user1?.inRooms.has(curRoom.roomid) || curRoom.auth.get(userID1) === Users.PLAYER_SYMBOL) &&
 			(user2?.inRooms.has(curRoom.roomid) || curRoom.auth.get(userID2) === Users.PLAYER_SYMBOL)
 		) {
-			if (connection) void curRoom.uploadReplay(connection.user, connection, "forpunishment");
+			if (connection) {
+				void curRoom.uploadReplay(connection.user, connection, "forpunishment");
+			}
 			battles.push(curRoom.roomid);
 		}
 	}
@@ -243,7 +245,7 @@ export const commands: Chat.ChatCommands = {
 						status.push(punishMsg);
 					}
 				}
-				if (Punishments.sharedIps.has(ip)) {
+				if (Punishments.isSharedIp(ip)) {
 					let sharedStr = 'shared';
 					if (Punishments.sharedIps.get(ip)) {
 						sharedStr += `: ${Punishments.sharedIps.get(ip)}`;
@@ -474,7 +476,7 @@ export const commands: Chat.ChatCommands = {
 			// ip
 			this.sendReply(`Users with IP ${ipOrHost}${targetRoom ? ` in the room ${targetRoom.title}` : ``}:`);
 			for (const curUser of Users.users.values()) {
-				if (curUser.latestIp !== ipOrHost) continue;
+				if (!curUser.ips.some(ip => ip === ipOrHost)) continue;
 				if (targetRoom && !curUser.inRooms.has(targetRoom.roomid)) continue;
 				results.push(`${curUser.connected ? ONLINE_SYMBOL : OFFLINE_SYMBOL} ${curUser.name}`);
 			}
@@ -484,7 +486,7 @@ export const commands: Chat.ChatCommands = {
 			const checker = IPTools.checker(ipOrHost);
 			for (const curUser of Users.users.values()) {
 				if (results.length > 100 && !isAll) continue;
-				if (!checker(curUser.latestIp)) continue;
+				if (!curUser.ips.some(ip => checker(ip))) continue;
 				if (targetRoom && !curUser.inRooms.has(targetRoom.roomid)) continue;
 				results.push(`${curUser.connected ? ONLINE_SYMBOL : OFFLINE_SYMBOL} ${curUser.name}`);
 			}

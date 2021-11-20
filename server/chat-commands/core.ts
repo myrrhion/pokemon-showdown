@@ -391,10 +391,10 @@ export const crqHandlers: {[k: string]: Chat.CRQHandler} = {
 			avatar: targetUser.avatar,
 			group: group,
 			customgroup: sectionleader ? "Section Leader" : undefined,
-			autoconfirmed: !!targetUser.autoconfirmed,
-			status: targetUser.getStatus(),
+			autoconfirmed: targetUser.autoconfirmed ? true : undefined,
+			status: targetUser.getStatus() || undefined,
 			rooms: roomList,
-			friended: user.friends?.has(targetUser.id),
+			friended: user.friends?.has(targetUser.id) || undefined,
 		};
 	},
 	roomlist(target, user, trustable) {
@@ -450,7 +450,7 @@ export const crqHandlers: {[k: string]: Chat.CRQHandler} = {
 		for (const userid in targetRoom.users) {
 			const curUser = targetRoom.users[userid];
 			if (!curUser.named) continue;
-			const userinfo = curUser.getIdentity(targetRoom.roomid);
+			const userinfo = curUser.getIdentity(targetRoom);
 			roominfo.users.push(userinfo);
 		}
 		return roominfo;
@@ -474,7 +474,7 @@ export const commands: Chat.ChatCommands = {
 		for (const id in room.users) {
 			const curUser = Users.get(room.users[id]);
 			if (!curUser?.named) continue;
-			userList.push(Utils.escapeHTML(curUser.getIdentity(room.roomid)));
+			userList.push(Utils.escapeHTML(curUser.getIdentity(room)));
 		}
 
 		let output = `There ${Chat.plural(userList, "are", "is")} <strong style="color:#24678d">${Chat.count(userList, "</strong> users")} in this room:<br />`;
@@ -492,7 +492,7 @@ export const commands: Chat.ChatCommands = {
 		target = this.checkChat(`/${this.cmd} ${target || ''}`);
 
 		if (this.message.startsWith(`/ME`)) {
-			const uppercaseIdentity = user.getIdentity(room?.roomid).toUpperCase();
+			const uppercaseIdentity = user.getIdentity(room).toUpperCase();
 			if (this.pmTarget) {
 				const msg = `|pm|${uppercaseIdentity}|${this.pmTarget.getIdentity()}|${target}`;
 				user.send(msg);
