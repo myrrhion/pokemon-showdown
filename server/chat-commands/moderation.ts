@@ -363,7 +363,7 @@ export const commands: Chat.ChatCommands = {
 			const inheritedUserType = (modjoinSetting ? ` of rank ${modjoinSetting} and above` : '');
 			if (curRoom.parent) {
 				const also = buffer.length === 0 ? `` : ` also`;
-				buffer.push(`${curRoom.title} is a ${roomType}subroom of ${curRoom.parent.title}, so ${curRoom.parent.title} users${inheritedUserType}${also} have authority in this room.`);
+				buffer.push(`${curRoom.title} is a ${roomType}subroom of ${curRoom.parent.title}, so ${curRoom.parent.title} users${inheritedUserType}${also} have authority in this room. Names in **bold** are online.`);
 			}
 			curRoom = curRoom.parent;
 		}
@@ -372,9 +372,11 @@ export const commands: Chat.ChatCommands = {
 			return;
 		}
 		if (!curRoom.settings.isPrivate) {
-			buffer.push(`${curRoom.title} is a public room, so global auth with no relevant roomauth will have authority in this room.`);
+			buffer.push(`${curRoom.title} is a public room, so global auth with no relevant roomauth will have authority in this room. Names in **bold** are online.`);
 		} else if (curRoom.settings.isPrivate === 'hidden' || curRoom.settings.isPrivate === 'voice') {
-			buffer.push(`${curRoom.title} is a hidden room, so global auth with no relevant roomauth will have authority in this room.`);
+			buffer.push(`${curRoom.title} is a hidden room, so global auth with no relevant roomauth will have authority in this room. Names in **bold** are online.`);
+		} else {
+			buffer.push(`Names in **bold** are online.`);
 		}
 		if (targetRoom !== room) buffer.unshift(`${targetRoom.title} room auth:`);
 		connection.popup(`${buffer.join("\n\n")}${userLookup}`);
@@ -541,7 +543,10 @@ export const commands: Chat.ChatCommands = {
 			return this.errorReply("Warning is unavailable in group chats.");
 		}
 		// If used in pms, staff, help tickets or battles, log the warn to the global modlog.
-		const globalWarn = !room || room.roomid === 'staff' || room.roomid.startsWith('help-') || (room.battle && !room.parent);
+		const globalWarn = (
+			!room || ['staff', 'adminlog'].includes(room.roomid) ||
+			room.roomid.startsWith('help-') || (room.battle && !room.parent)
+		);
 
 		const {targetUser, inputUsername, targetUsername, rest: reason} = this.splitUser(target);
 		const targetID = toID(targetUsername);
@@ -605,6 +610,7 @@ export const commands: Chat.ChatCommands = {
 
 		// Automatically upload replays as evidence/reference to the punishment
 		if (saveReplay) this.parse('/savereplay forpunishment');
+		return true;
 	},
 	warnhelp: [
 		`/warn OR /k [username], [reason] - Warns a user showing them the site rules and [reason] in an overlay.`,
@@ -1496,9 +1502,11 @@ export const commands: Chat.ChatCommands = {
 			Users.globalAuth.setSection(userid, section);
 			this.addGlobalModAction(`${name} was appointed Section Leader of ${RoomSections.sectionNames[section]} by ${user.name}.`);
 			this.globalModlog(`SECTION LEADER`, userid, section);
-			if (targetUser && !Users.globalAuth.atLeast(targetUser, Users.SECTIONLEADER_SYMBOL)) {
+			if (targetUser) {
 				// do not use global /forcepromote
-				this.parse(`/globalsectionleader ${userid}`);
+				if (!Users.globalAuth.atLeast(targetUser, Users.SECTIONLEADER_SYMBOL)) {
+					this.parse(`/globalsectionleader ${userid}`);
+				}
 			} else {
 				this.sendReply(`User ${userid} is offline and unrecognized, and so can't be globally promoted.`);
 			}
@@ -1596,7 +1604,7 @@ export const commands: Chat.ChatCommands = {
 	htmldeclare(target, room, user) {
 		if (!target) return this.parse('/help htmldeclare');
 		room = this.requireRoom();
-		this.checkCan('gdeclare');
+		this.checkCan('declare', null, room);
 		this.checkChat();
 		this.checkHTML(target);
 
@@ -1609,7 +1617,7 @@ export const commands: Chat.ChatCommands = {
 		this.add(`|raw|<div class="broadcast-blue"><b>${target}</b></div>`);
 		this.modlog(`HTMLDECLARE`, null, target);
 	},
-	htmldeclarehelp: [`/htmldeclare [message] - Anonymously announces a message using safe HTML. Requires: &`],
+	htmldeclarehelp: [`/htmldeclare [message] - Anonymously announces a message using safe HTML. Requires: # * &`],
 
 	gdeclare: 'globaldeclare',
 	globaldeclare(target, room, user) {
@@ -1851,6 +1859,16 @@ export const commands: Chat.ChatCommands = {
 		this.checkCan('forcerename', userid);
 		if (targetUser?.namelocked && !week) {
 			return this.errorReply(`User '${targetUser.name}' is already namelocked.`);
+		}
+		if (!force && !week) {
+			const existingPunishments = Punishments.search(userid);
+			for (const [,, punishment] of existingPunishments) {
+				if (punishment.type === 'LOCK' && (punishment.expireTime - Date.now()) > (2 * DAY)) {
+					this.errorReply(`User '${userid}' is already normally locked for more than 2 days.`);
+					this.errorReply(`Use /weeknamelock to namelock them instead, so you don't decrease the existing punishment.`);
+					return this.errorReply(`If you really need to override this, use /forcenamelock.`);
+				}
+			}
 		}
 		const {privateReason, publicReason} = this.parseSpoiler(reason);
 		const reasonText = publicReason ? ` (${publicReason})` : `.`;

@@ -320,6 +320,7 @@ export class RandomGen5Teams extends RandomGen6Teams {
 		isLead: boolean
 	): string | undefined {
 		if (species.requiredItem) return species.requiredItem;
+		if (species.requiredItems) return this.sample(species.requiredItems);
 
 		if (species.name === 'Marowak') return 'Thick Club';
 		if (species.name === 'Farfetch\u2019d') return 'Stick';
@@ -335,7 +336,7 @@ export class RandomGen5Teams extends RandomGen6Teams {
 				return (counter.get('Physical') > counter.get('Special')) ? 'Choice Band' : 'Choice Specs';
 			}
 		}
-		if (species.evos.length) return 'Eviolite';
+		if (species.evos.some(s => !this.dex.species.get(s).isNonstandard)) return 'Eviolite';
 		if (moves.has('shellsmash')) return 'White Herb';
 		if (ability === 'Harvest' || moves.has('bellydrum')) return 'Sitrus Berry';
 		if ((ability === 'Magic Guard' || ability === 'Sheer Force') && counter.damagingMoves.size > 1) return 'Life Orb';
@@ -718,6 +719,9 @@ export class RandomGen5Teams extends RandomGen6Teams {
 			NUBL: 86,
 			NU: 86,
 			'(NU)': 88,
+			PUBL: 88,
+			PU: 88,
+			'(PU)': 90,
 		};
 		const customScale: {[forme: string]: number} = {
 			Delibird: 100, 'Farfetch\u2019d': 100, Luvdisc: 100, Unown: 100,
@@ -769,6 +773,8 @@ export class RandomGen5Teams extends RandomGen6Teams {
 	}
 
 	randomTeam() {
+		this.enforceNoDirectCustomBanlistChanges();
+
 		const seed = this.prng.seed;
 		const ruleTable = this.dex.formats.getRuleTable(this.format);
 		const pokemon: RandomTeamsTypes.RandomSet[] = [];

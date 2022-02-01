@@ -717,11 +717,12 @@ export const FormatsData: {[k: string]: ModdedSpeciesFormatsData} = {
 		tier: "LC",
 	},
 	rhydon: {
+		randomBattleMoves: ["earthquake", "megahorn", "rockblast", "stealthrock", "stoneedge", "toxic"],
 		tier: "NU",
 		doublesTier: "NFE",
 	},
 	rhyperior: {
-		randomBattleMoves: ["dragontail", "earthquake", "icepunch", "megahorn", "rockblast", "rockpolish", "stealthrock", "stoneedge"],
+		randomBattleMoves: ["dragontail", "earthquake", "icepunch", "megahorn", "rockblast", "rockpolish", "stoneedge"],
 		randomDoubleBattleMoves: ["earthquake", "icepunch", "megahorn", "protect", "rockslide", "stealthrock", "stoneedge"],
 		tier: "RU",
 		doublesTier: "(DUU)",
@@ -2300,7 +2301,7 @@ export const FormatsData: {[k: string]: ModdedSpeciesFormatsData} = {
 		doublesTier: "DUber",
 	},
 	deoxys: {
-		randomBattleMoves: ["extremespeed", "icebeam", "firepunch", "knockoff", "psychoboost", "stealthrock", "superpower"],
+		randomBattleMoves: ["extremespeed", "firepunch", "icebeam", "knockoff", "psychoboost", "stealthrock", "superpower"],
 		randomDoubleBattleMoves: ["extremespeed", "firepunch", "icebeam", "knockoff", "protect", "psychoboost", "superpower"],
 		tier: "Uber",
 		doublesTier: "(DUU)",

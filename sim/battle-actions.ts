@@ -425,7 +425,8 @@ export class BattleActions {
 			target = targets[targets.length - 1]; // in case of redirection
 		}
 
-		if (!sourceEffect || sourceEffect.id === 'pursuit') {
+		const callerMoveForPressure = sourceEffect && (sourceEffect as ActiveMove).pp ? sourceEffect as ActiveMove : null;
+		if (!sourceEffect || callerMoveForPressure || sourceEffect.id === 'pursuit') {
 			let extraPP = 0;
 			for (const source of pressureTargets) {
 				const ppDrop = this.battle.runEvent('DeductPP', source, pokemon, move);
@@ -434,7 +435,7 @@ export class BattleActions {
 				}
 			}
 			if (extraPP > 0) {
-				pokemon.deductPP(moveOrMoveName, extraPP);
+				pokemon.deductPP(callerMoveForPressure || moveOrMoveName, extraPP);
 			}
 		}
 
@@ -536,7 +537,7 @@ export class BattleActions {
 			[moveSteps[2], moveSteps[4]] = [moveSteps[4], moveSteps[2]];
 		}
 
-		if (!notActive) this.battle.setActiveMove(move, pokemon, targets[0]);
+		if (notActive) this.battle.setActiveMove(move, pokemon, targets[0]);
 
 		const hitResult = this.battle.singleEvent('Try', move, null, pokemon, targets[0], move) &&
 			this.battle.singleEvent('PrepareHit', move, {}, targets[0], pokemon, move) &&
@@ -1271,7 +1272,10 @@ export class BattleActions {
 				this.battle.runEvent('ModifySecondaries', target, source, moveData, moveData.secondaries.slice());
 			for (const secondary of secondaries) {
 				const secondaryRoll = this.battle.random(100);
-				if (typeof secondary.chance === 'undefined' || secondaryRoll < secondary.chance) {
+				// User stat boosts or target stat drops can possibly overflow if it goes beyond 256
+				const secondaryOverflow = (secondary.boosts || secondary.self);
+				if (typeof secondary.chance === 'undefined' ||
+					secondaryRoll < (secondaryOverflow ? secondary.chance % 256 : secondary.chance)) {
 					this.moveHit(target, source, move, secondary, true, isSelf);
 				}
 			}
@@ -1434,7 +1438,7 @@ export class BattleActions {
 				this.battle.heal(pokemon.maxhp, pokemon, pokemon, zPower);
 				break;
 			case 'healreplacement':
-				move.self = {slotCondition: 'healreplacement'};
+				pokemon.side.addSlotCondition(pokemon, 'healreplacement', pokemon, move);
 				break;
 			case 'clearnegativeboost':
 				const boosts: SparseBoostsTable = {};
@@ -1562,6 +1566,10 @@ export class BattleActions {
 
 		if (!basePower) return 0;
 		basePower = this.battle.clampIntRange(basePower, 1);
+		// Hacked Max Moves have 0 base power, even if you Dynamax
+		if ((!source.volatiles['dynamax'] && move.isMax) || (move.isMax && this.dex.moves.get(move.baseMove).isMax)) {
+			basePower = 0;
+		}
 
 		const level = source.level;
 

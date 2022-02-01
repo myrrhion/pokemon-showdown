@@ -328,7 +328,7 @@ export abstract class BasicRoom {
 		if (this.userCount) Sockets.roomBroadcast(this.roomid, message);
 	}
 	sendMods(data: string) {
-		this.sendRankedUsers(data, '%');
+		this.sendRankedUsers(data, '*');
 	}
 	sendRankedUsers(data: string, minRank: GroupSymbol = '+') {
 		if (this.settings.staffRoom) {
@@ -978,7 +978,7 @@ export abstract class BasicRoom {
 
 		this.minorActivity?.onConnect?.(user, connection);
 		this.game?.onJoin?.(user, connection);
-		Chat.runHandlers('RoomJoin', this, user, connection);
+		Chat.runHandlers('onRoomJoin', this, user, connection);
 		return true;
 	}
 	onRename(user: User, oldid: ID, joining: boolean) {
@@ -1102,6 +1102,8 @@ export abstract class BasicRoom {
 
 		this.setParent(null);
 		this.clearSubRooms();
+
+		Chat.runHandlers('onRoomDestroy', this.roomid);
 
 		Rooms.global.deregisterChatRoom(this.roomid);
 		Rooms.global.delistChatRoom(this.roomid);
@@ -1499,7 +1501,7 @@ export class GlobalRoomState {
 			void this.ladderIpLog.write(ladderIpLogString);
 		}
 		for (const player of players) {
-			Chat.runHandlers('BattleStart', player, room);
+			Chat.runHandlers('onBattleStart', player, room);
 		}
 	}
 
@@ -1657,14 +1659,14 @@ export class GlobalRoomState {
 			if (curRoom) curRoom.add(message).update();
 		}
 	}
-	reportCrash(err: Error, crasher = "The server") {
+	reportCrash(err: Error | string, crasher = "The server") {
 		const time = Date.now();
 		if (time - this.lastReportedCrash < CRASH_REPORT_THROTTLE) {
 			return;
 		}
 		this.lastReportedCrash = time;
 
-		const stack = (err && (err.stack || err.message || err.name)) || '';
+		const stack = typeof err === 'string' ? err : err?.stack || err?.message || err?.name || '';
 		const [stackFirst, stackRest] = Utils.splitFirst(Utils.escapeHTML(stack), `<br />`);
 		let fullStack = `<b>${crasher} crashed:</b> ` + stackFirst;
 		if (stackRest) fullStack = `<details class="readmore"><summary>${fullStack}</summary>${stackRest}</details>`;

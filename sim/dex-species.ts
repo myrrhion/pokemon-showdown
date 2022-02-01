@@ -283,7 +283,7 @@ export class Species extends BasicEffect implements Readonly<BasicEffect & Speci
 		if (Array.isArray(data.changesFrom)) this.changesFrom = data.changesFrom[0];
 
 		if (!this.gen && this.num >= 1) {
-			if (this.num >= 810 || ['Gmax', 'Galar', 'Galar-Zen'].includes(this.forme)) {
+			if (this.num >= 810 || ['Gmax', 'Galar', 'Galar-Zen', 'Hisui'].includes(this.forme)) {
 				this.gen = 8;
 			} else if (this.num >= 722 || this.forme.startsWith('Alola') || this.forme === 'Starter') {
 				this.gen = 7;
@@ -474,13 +474,15 @@ export class DexSpecies {
 				if (!isLetsGo) species.isNonstandard = 'Past';
 			}
 			if (this.dex.currentMod === 'gen8bdsp' &&
-				(!species.isNonstandard || species.isNonstandard === "Gigantamax")) {
-				if (species.gen > 4 || species.num < 1 || species.id === 'pichuspikyeared') {
-					species.isNonstandard = 'Past';
+				(!species.isNonstandard || ["Gigantamax", "CAP"].includes(species.isNonstandard))) {
+				if (species.gen > 4 || (species.num < 1 && species.isNonstandard !== 'CAP') ||
+					species.id === 'pichuspikyeared') {
+					species.isNonstandard = 'Future';
 					species.tier = species.doublesTier = 'Illegal';
 				}
 			}
-			species.nfe = !!(species.evos.length && this.get(species.evos[0]).gen <= this.dex.gen);
+			const legalEvos = species.evos.filter(mon => !this.get(mon).isNonstandard);
+			species.nfe = !!(legalEvos.length && this.get(legalEvos[0]).gen <= this.dex.gen);
 			species.canHatch = species.canHatch ||
 				(!['Ditto', 'Undiscovered'].includes(species.eggGroups[0]) && !species.prevo && species.name !== 'Manaphy');
 			if (this.dex.gen === 1) species.bst -= species.baseStats.spd;

@@ -8,7 +8,7 @@
  * @license MIT
  */
 
-import {FS, SQL, Utils} from '../../lib';
+import {SQL, Utils} from '../../lib';
 import {Config} from '../config-loader';
 
 // If a modlog query takes longer than this, it will be logged.
@@ -22,7 +22,8 @@ export const MODLOG_DB_PATH = Config.nofswriting ? ':memory:' : `${__dirname}/..
 const GLOBAL_PUNISHMENTS = [
 	'WEEKLOCK', 'LOCK', 'BAN', 'RANGEBAN', 'RANGELOCK', 'FORCERENAME',
 	'TICKETBAN', 'AUTOLOCK', 'AUTONAMELOCK', 'NAMELOCK', 'AUTOBAN', 'MONTHLOCK',
-	'AUTOWEEKLOCK', 'WEEKNAMELOCK',
+	'AUTOWEEKLOCK', 'WEEKNAMELOCK', 'FORCEWEEKLOCK', 'FORCELOCK', 'FORCEMONTHLOCK',
+	'FORCERENAME OFFLINE',
 ];
 
 const PUNISHMENTS = [
@@ -96,9 +97,16 @@ export class Modlog {
 	constructor(databasePath: string, options: Partial<SQL.Options>) {
 		this.queuedEntries = [];
 		this.databaseReady = false;
-		const dbExists = FS(databasePath).existsSync();
+		if (!options.onError) {
+			options.onError = (error, data, isParent) => {
+				if (!isParent) return;
+				Monitor.crashlog(error, 'A modlog SQLite query', {
+					query: JSON.stringify(data),
+				});
+			};
+		}
 		this.database = SQL(module, {
-			file: MODLOG_DB_PATH,
+			file: databasePath,
 			extension: 'server/modlog/transactions.ts',
 			...options,
 		});
@@ -122,18 +130,19 @@ export class Modlog {
 			}
 		}
 
-		this.readyPromise = this.setupDatabase(dbExists).then(result => {
+		this.readyPromise = this.setupDatabase().then(result => {
 			this.databaseReady = result;
 			this.readyPromise = null;
 		});
 	}
 
-	async setupDatabase(dbExists: boolean) {
+	async setupDatabase() {
 		if (!Config.usesqlite) return false;
 		await this.database.exec("PRAGMA foreign_keys = ON;");
 		await this.database.exec(`PRAGMA case_sensitive_like = true;`);
 
 		// Set up tables, etc
+		const dbExists = await this.database.get(`SELECT * FROM sqlite_master WHERE name = 'modlog'`);
 		if (!dbExists) {
 			await this.database.runFile(MODLOG_SCHEMA_PATH);
 		}
