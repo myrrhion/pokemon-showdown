@@ -1,4 +1,4 @@
-export const Learnsets: {[k: string]: ModdedLearnsetData} = {
+export const Learnsets: import('../../../sim/dex-species').ModdedLearnsetDataTable = {
 	bulbasaur: {
 		inherit: true,
 		learnset: {
@@ -51836,7 +51836,7 @@ export const Learnsets: {[k: string]: ModdedLearnsetData} = {
 			workup: ["7M"],
 		},
 	},
-	greninjaash: {
+	greninjabond: {
 		inherit: true,
 		learnset: {
 			acrobatics: ["7M"],

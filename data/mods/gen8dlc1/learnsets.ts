@@ -1,6 +1,6 @@
 /* eslint-disable max-len */
 
-export const Learnsets: {[speciesid: string]: LearnsetData} = {
+export const Learnsets: import('../../../sim/dex-species').ModdedLearnsetDataTable = {
 	bulbasaur: {
 		learnset: {
 			amnesia: ["8M", "7E", "6E", "5E", "4E"],
@@ -60182,7 +60182,7 @@ export const Learnsets: {[speciesid: string]: LearnsetData} = {
 			{generation: 6, level: 100, isHidden: true, moves: ["hydrocannon", "gunkshot", "matblock", "happyhour"], pokeball: "cherishball"},
 		],
 	},
-	greninjaash: {
+	greninjabond: {
 		learnset: {
 			acrobatics: ["7M"],
 			aerialace: ["7M", "7S0"],

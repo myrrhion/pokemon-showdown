@@ -1,4 +1,4 @@
-export const Pokedex: {[k: string]: ModdedSpeciesData} = {
+export const Pokedex: import('../../../sim/dex-species').ModdedSpeciesDataTable = {
 	eevee: {
 		inherit: true,
 		evos: ["Vaporeon", "Jolteon", "Flareon", "Espeon", "Umbreon", "Leafeon", "Glaceon"],
@@ -42,6 +42,7 @@ export const Pokedex: {[k: string]: ModdedSpeciesData} = {
 	arceusfairy: {
 		inherit: true,
 		requiredItems: ["Pixie Plate"],
+		gen: 4,
 	},
 	arceusfighting: {
 		inherit: true,

@@ -467,6 +467,9 @@ export const Punishments = new class {
 		for (const row of data.replace('\r', '').split("\n")) {
 			if (!row) continue;
 			const [ip, type, note] = row.trim().split("\t");
+			if (ip === 'IP') {
+				continue; // first row
+			}
 			if (IPTools.ipRegex.test(note)) {
 				// this is handling a bug where data accidentally got reversed
 				// (into note,shared,ip format instead of ip,shared,note format)
@@ -943,10 +946,11 @@ export const Punishments = new class {
 		id: ID | PunishType | null,
 		ignoreAlts: boolean,
 		reason: string,
-		bypassPunishmentfilter = false
+		bypassPunishmentfilter = false,
+		rest?: any[]
 	) {
 		if (!expireTime) expireTime = Date.now() + LOCK_DURATION;
-		const punishment = {type: 'LOCK', id, expireTime, reason: reason} as Punishment;
+		const punishment = {type: 'LOCK', id, expireTime, reason: reason, rest} as Punishment;
 
 		const userObject = Users.get(user);
 		// This makes it easier for unit tests to tell if a user was locked
@@ -1335,9 +1339,7 @@ export const Punishments = new class {
 		if (room.subRooms) {
 			for (const subRoom of room.subRooms.values()) {
 				for (const curUser of affected) {
-					if (subRoom.game && subRoom.game.removeBannedUser) {
-						subRoom.game.removeBannedUser(curUser);
-					}
+					subRoom.game?.removeBannedUser?.(curUser);
 					curUser.leaveRoom(subRoom.roomid);
 				}
 			}
@@ -1355,9 +1357,7 @@ export const Punishments = new class {
 		for (const curUser of affected) {
 			// ensure there aren't roombans so nothing gets mixed up
 			Punishments.roomUnban(room, (curUser as any).id || curUser);
-			if (room.game && room.game.removeBannedUser) {
-				room.game.removeBannedUser(curUser);
-			}
+			room.game?.removeBannedUser?.(curUser);
 			curUser.leaveRoom(room.roomid);
 		}
 
@@ -1689,9 +1689,10 @@ export const Punishments = new class {
 				return;
 			}
 			if (id === 'BAN') {
+				const appealUrl = Config.banappealurl || Config.appealurl;
 				user.popup(
 					`Your username (${user.name}) is banned${bannedUnder}. Your ban will expire in a few days.${reason}` +
-					`${Config.appealurl ? `||||Or you can appeal at: ${Config.appealurl}` : ``}`
+					`${appealUrl ? `||||Or you can appeal at: ${appealUrl}` : ``}`
 				);
 				user.notified.punishment = true;
 				if (registered) void Punishments.punish(user, punishment, false);
@@ -1731,13 +1732,14 @@ export const Punishments = new class {
 		}
 
 		if (punishments) {
-			let shared = false;
+			const isSharedIP = Punishments.isSharedIp(ip);
+			let sharedAndHasPunishment = false;
 			for (const punishment of punishments) {
-				if (Punishments.isSharedIp(user.latestIp)) {
+				if (isSharedIP) {
 					if (!user.locked && !user.autoconfirmed) {
 						user.semilocked = `#sharedip ${punishment.id}` as PunishType;
 					}
-					shared = true;
+					sharedAndHasPunishment = true;
 				} else {
 					if (['BAN', 'LOCK', 'NAMELOCK'].includes(punishment.type)) {
 						user.locked = punishment.id;
@@ -1751,7 +1753,7 @@ export const Punishments = new class {
 					}
 				}
 			}
-			if (!shared) Punishments.checkPunishmentTime(user, Punishments.byWeight(punishments)[0]);
+			if (!sharedAndHasPunishment) Punishments.checkPunishmentTime(user, Punishments.byWeight(punishments)[0]);
 		}
 
 		return IPTools.lookup(ip).then(({dnsbl, host, hostType}) => {
@@ -1790,8 +1792,12 @@ export const Punishments = new class {
 		}
 		if (!banned) return false;
 
-		const appeal = (Config.appealurl ? `||||Or you can appeal at: ${Config.appealurl}` : ``);
-		connection.send(`|popup||modal|You are banned because you have the same IP (${ip}) as banned user '${banned}'. Your ban will expire in a few days.${appeal}`);
+		const appealUrl = Config.banappealurl || Config.appealurl;
+		connection.send(
+			`|popup||modal|You are banned because you have the same IP (${ip}) as banned user '${banned}'. ` +
+			`Your ban will expire in a few days.` +
+			`${appealUrl ? `||||Or you can appeal at: ${appealUrl}` : ``}`
+		);
 		Monitor.notice(`CONNECT BLOCKED - IP BANNED: ${ip} (${banned})`);
 
 		return banned;
@@ -1831,9 +1837,7 @@ export const Punishments = new class {
 				}
 				if (punishment.type !== 'ROOMBAN' && punishment.type !== 'BLACKLIST') return null;
 				const room = Rooms.get(roomid)!;
-				if (room.game && room.game.removeBannedUser) {
-					room.game.removeBannedUser(user);
-				}
+				room.game?.removeBannedUser?.(user);
 				user.leaveRoom(room.roomid);
 			}
 			return punishments;
@@ -1889,12 +1893,19 @@ export const Punishments = new class {
 						if (punishment.type === 'ROOMBAN') {
 							return punishment;
 						} else if (punishment.type === 'BLACKLIST') {
-							if (Punishments.isSharedIp(ip) && user.autoconfirmed) return;
+							if (Punishments.isSharedIp(ip) && user.autoconfirmed) continue;
 
 							return punishment;
 						}
 					}
 				}
+			}
+		}
+
+		for (const id of user.previousIDs) {
+			punishments = Punishments.roomUserids.nestedGet(roomid, id);
+			for (const p of punishments || []) {
+				if (['ROOMBAN', 'BLACKLIST'].includes(p.type)) return p;
 			}
 		}
 

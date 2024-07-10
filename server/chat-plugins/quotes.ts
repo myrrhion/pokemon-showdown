@@ -1,7 +1,7 @@
 import {FS, Utils} from '../../lib';
 
 const STORAGE_PATH = 'config/chat-plugins/quotes.json';
-const MAX_QUOTES = 200;
+const MAX_QUOTES = 300;
 
 interface Quote {
 	userid: string;
@@ -45,8 +45,7 @@ export const commands: Chat.ChatCommands = {
 	},
 	randquotehelp: [`/randquote [showauthor] - Show a random quote from the room. Add 'showauthor' to see who added it and when.`],
 
-	addquote: 'quote',
-	quote(target, room, user) {
+	addquote(target, room, user) {
 		room = this.requireRoom();
 		if (!room.persist) {
 			return this.errorReply("This command is unavailable in temporary rooms.");
@@ -54,7 +53,7 @@ export const commands: Chat.ChatCommands = {
 		target = target.trim();
 		this.checkCan('mute', null, room);
 		if (!target) {
-			return this.parse(`/help quote`);
+			return this.parse(`/help addquote`);
 		}
 		if (!quotes[room.roomid]) quotes[room.roomid] = [];
 
@@ -78,7 +77,7 @@ export const commands: Chat.ChatCommands = {
 		this.privateModAction(`${user.name} added a new quote: "${collapsedQuote}".`);
 		return this.modlog(`ADDQUOTE`, null, collapsedQuote);
 	},
-	quotehelp: [`/quote [quote] - Adds [quote] to the room's quotes. Requires: % @ # &`],
+	addquotehelp: [`/addquote [quote] - Adds [quote] to the room's quotes. Requires: % @ # &`],
 
 	removequote(target, room, user) {
 		room = this.requireRoom();
@@ -106,13 +105,14 @@ export const commands: Chat.ChatCommands = {
 		const roomQuotes = quotes[room.roomid];
 		if (!roomQuotes?.length) return this.errorReply(`This room has no quotes.`);
 		const [num, showAuthor] = Utils.splitFirst(target, ',');
-		const index = parseInt(num) - 1;
+		const index = num === 'last' ? roomQuotes.length - 1 : parseInt(num) - 1;
 		if (isNaN(index)) {
 			return this.errorReply(`Invalid index.`);
 		}
 		if (!roomQuotes[index]) {
 			return this.errorReply(`Quote not found.`);
 		}
+		this.runBroadcast(true);
 		const {quote, date, userid} = roomQuotes[index];
 		const time = Chat.toTimestamp(new Date(date), {human: true});
 		const attribution = toID(showAuthor) === 'showauthor' ? `<hr /><small>Added by ${userid} on ${time}</small>` : '';
@@ -131,6 +131,18 @@ export const commands: Chat.ChatCommands = {
 		this.parse(`/join view-quotes-${targetRoom.roomid}`);
 	},
 	quoteshelp: [`/quotes [room] - Shows all quotes for [room]. Defaults the room the command is used in.`],
+
+	quote() {
+		this.sendReply(`/quote as a method of adding quotes has been deprecated. Use /addquote instead.`);
+		return this.parse(`/help quote`);
+	},
+	quotehelp: [
+		"/randquote [showauthor] - Show a random quote from the room. Add 'showauthor' to see who added it and when.",
+		"/removequote [index] - Removes the quote from the room's quotes. Requires: % @ # &",
+		"/viewquote [index][, params] - View the quote from the room's quotes.",
+		"If 'showauthor' is used for the [params] argument, it shows who added the quote and when.",
+		"Requires: % @ # &", "/quotes [room] - Shows all quotes for [room]. Defaults the room the command is used in.",
+	],
 };
 
 export const pages: Chat.PageTable = {

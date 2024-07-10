@@ -1,5 +1,4 @@
 export const Scripts: ModdedBattleScriptsData = {
-	gen: 8,
 	field: {
 		suppressingWeather() {
 			for (const pokemon of this.battle.getAllActive()) {
@@ -40,7 +39,7 @@ export const Scripts: ModdedBattleScriptsData = {
 				((this.volatiles['gastroacid'] ||
 					(neutralizinggas && (this.ability !== ('neutralizinggas' as ID) ||
 						this.m.abils?.includes('ability:neutralizinggas'))
-					)) && !this.getAbility().isPermanent
+					)) && !this.getAbility().flags['cantsuppress']
 				)
 			);
 		},
